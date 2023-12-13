@@ -1,0 +1,290 @@
+---
+title: "Airbnb - Revenue Management"
+author: "David Gómez Sedas"
+format: html
+editor: visual
+---
+
+A continuación se enumeran todas las librerías utilizadas en el AB:
+
+```{r}
+library(readr)
+library(tidyverse)
+library(quarto)
+```
+
+# Datos usados
+
+```{r}
+df <- read_csv("listings_bcn.csv", show_col_types = FALSE)
+```
+
+## Origen de los datos
+
+Los datos han sido extraidos de "Inside Airbnb", el cual es un proyecto que provee datos e información sobre el impacto que tiene Airbnb sobre las comunidades residenciales.
+
+La finalidad de este proyecto es trabajar en torno a una visión que consiste en informar a estas comunidades sobre el uso real de airbnb.
+
+Los datos son extraidos de la web de Airbnb oficial y son almacenados en archivos compatibles con datos tabulares para distribuirlos. Podemos encontrar que los datos están separados por ciudades y estos se suelen actualizar frecuentemente para mostrar una imagen lo mas actual posible.
+
+Todos los datos de la web estan licenciados bajo Creative Commons Attribution 4.0 International License.
+
+Concretamente, los datos utilizados en este trabajo consisten en todas las residencias activas en Airbnb de la ciudad de Barcelona. En ellas podemos encontar diferentes tipos de servicios: Apartamentos, casas, habitaciones y camas en habitaciones compartidas.
+
+## Contenido
+
+Los datos utilizados consisten en unos datos tabulares los cuales consisten en 18086 entradas y 75 columnas.
+
+```{r}
+str(df)
+```
+
+En el archivo encontramos cuatro tipos de datos distintos:
+
+-   double
+
+-   character
+
+-   logical
+
+-   date
+
+Los datos nos hablan de todos los apartados relacionados con el alojamiento ofrecido, la información del host, el precio medio, la disponibilidad, imagenes de los alojamientos e información de las reseñas.
+
+## Muestra de los datos
+
+A continuación, una muestra de los datos obtenidos:
+
+```{r}
+head(df)
+```
+
+# Limpieza general de los datos
+
+Algunas de las columnas del dataset contienen datos que no vamos a utilizar, algunas por no tener información analizable y otras por no tener relación con el proyecto que queremos llevar a cabo. Creamos un dataset con los datos que vamos a usar:
+
+```{r}
+df <- subset(df, select = c(host_response_time, host_response_rate, host_acceptance_rate, host_total_listings_count, host_verifications, neighbourhood_cleansed, neighbourhood_group_cleansed, property_type, room_type, accommodates, bathrooms_text, bedrooms, beds, amenities, price, minimum_nights, maximum_nights, availability_30, availability_60, availability_90, availability_365, number_of_reviews, number_of_reviews_ltm, number_of_reviews_l30d, review_scores_rating, review_scores_accuracy, review_scores_cleanliness, review_scores_checkin, review_scores_communication, review_scores_location, review_scores_value, instant_bookable, reviews_per_month))
+```
+
+Algunos de los datos en el df no están en el mejor formato para ser analizados, a continuación vamos a corregir estos datos.
+
+## host_response_time
+
+Nos encontramos con variables categoricas en diferentes medidas de tiempo. Sería conveniente ajustar todas estas pora que estén en la misma medida de tiempo.
+
+```{r}
+unique(df$host_response_time)
+```
+
+Encontramos seis valores. A continuación listamos las diferentes categorías y su nuevo valor: - "within an hour" -\> \<1h - "within a few hours" -\> \~12h - "within a day -\> \<24h -"a few days or more" -\> \>48h - "N/A" -\> Unificar con NA
+
+```{r}
+df$host_response_time <- ifelse(df$host_response_time == "within an hour", "<1h",
+                        ifelse(df$host_response_time == "within a few hours", "~12h",
+                        ifelse(df$host_response_time == "within a day", "~24h",
+                        ifelse(df$host_response_time == "a few days or more", ">48h",
+                        ifelse(df$host_response_time == "N/A", NA, df$host_response_time)))))
+```
+
+## bathrooms_text
+
+Esta variable incluye el valor númerico de baños y además nos indica si estos son compartidos o no. Para la claridad en los datos sería conveniente crear dos variables de esta:
+
+1.  Una variable número con el número de baños.
+
+2.  Un Boolean indicando si estos son compartidos o no.
+
+```{r}
+unique(df$bathrooms_text)
+```
+
+Vemos que casi todas las categorías tienen números. A excepción de tres de ellas. Vamos a añadirselo para compartir la estructura:
+
+```{r}
+df$bathrooms_text <- ifelse(df$bathrooms_text == "Shared half-bath", "0.5 Shared bath",
+                            ifelse(df$bathrooms_text == "Private half-bath", "0.5 bath",
+                            ifelse(df$bathrooms_text == "Half-bath", "0.5 bath", df$bathrooms_text)))
+
+```
+
+A continuación creamos la columna boolean la cual nos indica si un baño es compartido o no (Asumimos que si no es indicado, es privado).
+
+```{r}
+df$shared_bathrooms <- grepl("shared|Shared", df$bathrooms_text)
+```
+
+Seguidamente creamos una nueva columna que extraiga el número de baños del valor bathrooms_text
+
+```{r}
+df$n_bathrooms <- sapply(strsplit(df$bathrooms_text, " "), function(x) as.numeric(x[1]))
+```
+
+Recolocamos las columnas en la posición de bathrooms_text y eliminamos esta.
+
+```{r}
+bathrooms_text_position <- which(colnames(df) == "bathrooms_text")
+
+df <- df %>%
+  relocate(all_of(c("n_bathrooms", "shared_bathrooms")), .before = bathrooms_text_position)
+
+
+df <- df %>%
+  select(-bathrooms_text)
+
+rm(bathrooms_text_position)
+```
+
+## host_verifications
+
+En esta variable podemos ver en formato lista, los medios por los cuales se ha verificado un host. Para que los datos sean mas accesibles podemos crear una variable de tipo boolean por cada tipo de medio posible de verificación.
+
+```{r}
+unique(df$host_verifications)
+```
+
+Encontramos tres tipos de verificación:
+
+-   "email"
+
+-   "phone"
+
+-   "work_email"
+
+Creamos las tres variables y añadimos true si ese método está incluido en la columna host_verifications.
+
+```{r}
+df <- df %>%
+  mutate(verification_email = str_detect(df$host_verifications, "email"),
+         verification_phone = str_detect(df$host_verifications, "phone"),
+         verification_work_email = str_detect(df$host_verifications, "work_email"))
+
+host_verification_text_position <- which(colnames(df) == "host_verifications")
+
+df <- df %>%
+  relocate(all_of(c("verification_email", "verification_phone", "verification_work_email")), .before = host_verification_text_position)
+
+df <- df %>%
+  select(-host_verifications)
+
+rm(host_verification_text_position)
+```
+
+## price
+
+Podemos convertir price en una variable numérica para poderla usar en visualizaciones y otros tipos de funciones de tipo continuo:
+
+```{r}
+df$price <- as.numeric(gsub("\\$", "", df$price))
+```
+
+## amenities
+
+En esta variable encontramos un formato lista con varios elementos, sin embargo, no es conveniente desagruparlos ahora de cara a los análisis descriptivos de los datos a causa de la cantidad elevada que hay. Luego podremos desagruparlos cuando lo necesitemos.
+
+## review_score_rating
+
+El valor mínimo que puede tener un alojamiento es 1. En algunos campos pone 0 a causa de que el resto de valores son NA. Vamos a modificar estos valores a NA.
+
+```{r}
+df$review_scores_rating <- ifelse(df$review_scores_rating == 0, NA, df$review_scores_rating)
+```
+
+## host_response_rate y host_acceptance_rate
+
+Cambiamos ambas variables de tipo character con porcentaje a tipo numérico double:
+
+```{r}
+df$host_response_rate <- as.numeric(sub("%", "", df$host_response_rate))/100
+df$host_acceptance_rate <- as.numeric(sub("%", "", df$host_acceptance_rate))/100
+```
+
+## Conversión de campos con tags en factores
+
+Cambiamos todas las columnas de tipos strings que tengan etiquetas a tipo factor para que su uso sea mas sencillo.
+
+```{r}
+df <- df %>%
+  mutate(
+    host_response_time = factor(host_response_time),
+    neighbourhood_cleansed = factor(neighbourhood_cleansed),
+    neighbourhood_group_cleansed = factor(neighbourhood_group_cleansed),
+    property_type = factor(property_type),
+    room_type = factor(room_type)
+  )
+```
+
+# Análisis descriptivo de los datos
+
+Vamos a crear una variante del dataset, para la que solo incluir aquellos datos que nos interesen para el análisis descriptivo de los datos:
+
+## Summary
+
+```{r}
+summary(df)
+```
+
+## Distribución de las notas de review
+
+```{r}
+hist(df$review_scores_rating, main = "Histograma distribución de ratings")
+```
+
+## Distribución del precio por noche
+
+```{r}
+hist(df$price, main = "Histograma distribución precio", breaks=100)
+```
+
+## Distribución entre precio y reviews
+
+```{r}
+ggplot(df, aes(price, review_scores_rating)) + 
+  geom_smooth() 
+```
+
+## Media de precio por barrio
+
+```{r}
+df_precio_barrio <- df %>% select(price, neighbourhood_group_cleansed) %>% group_by(neighbourhood_group_cleansed) %>% summarize(avg_price = mean(price, na.rm = TRUE))
+
+ggplot(df_precio_barrio, aes(reorder(neighbourhood_group_cleansed, avg_price), avg_price)) +
+  geom_col() +
+  theme(axis.text.x = element_text(angle = 90))
+```
+
+## Distribución de la calificación por localización y el barrio del alojamiento
+
+```{r}
+ggplot(df, aes(neighbourhood_group_cleansed, review_scores_rating)) +
+  geom_boxplot() +
+  labs(x = "Barrio", y = "Calificación por localización") +
+  ggtitle("Boxplot de calificación por localización y barrio") +
+  theme(axis.text.x = element_text(angle = 90))
+```
+
+## Apartados de reviews divididas por tipo de alojamiento
+
+```{r}
+datos_agrupados <- df %>%
+gather(key = "rating_type", value = "ratings", review_scores_rating, review_scores_accuracy, review_scores_cleanliness, review_scores_checkin, review_scores_communication, review_scores_location, review_scores_value) %>% select(ratings, rating_type) %>% cbind(room_type = df$room_type)
+
+
+ggplot(datos_agrupados, aes(x = room_type)) +
+  geom_boxplot(aes(y = ratings, fill = rating_type)) +
+  scale_fill_brewer(palette = "Set1") +
+  theme(axis.text.x = element_text(angle = 90)) +
+  ylim(3.5,5)
+```
+
+# Objetivo del proyecto
+
+El objetivo con el análisis de datos es crear un modelo el cual enseñe a actuales o futuros propietarios de alojamientos de airbnb a obtener los máximos ingresos posibles teniendo en cuenta todas las características en del alojamiento y su perfil en Airbnb.
+
+El modelo a entrenar es de aprendizaje supervisado y continuo de regresión lineal.
+
+Guardado de archivo
+
+```{r}
+# quarto_render("AirbnbAB.qmd", output_format = "pdf")
+```
