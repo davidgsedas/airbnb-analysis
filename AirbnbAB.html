@@ -1,0 +1,991 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="en" xml:lang="en"><head>
+
+<meta charset="utf-8">
+<meta name="generator" content="quarto-1.3.433">
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes">
+
+<meta name="author" content="David Gómez Sedas">
+
+<title>Airbnb - Revenue Management</title>
+<style>
+code{white-space: pre-wrap;}
+span.smallcaps{font-variant: small-caps;}
+div.columns{display: flex; gap: min(4vw, 1.5em);}
+div.column{flex: auto; overflow-x: auto;}
+div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+ul.task-list{list-style: none;}
+ul.task-list li input[type="checkbox"] {
+  width: 0.8em;
+  margin: 0 0.8em 0.2em -1em; /* quarto-specific, see https://github.com/quarto-dev/quarto-cli/issues/4556 */ 
+  vertical-align: middle;
+}
+/* CSS for syntax highlighting */
+pre > code.sourceCode { white-space: pre; position: relative; }
+pre > code.sourceCode > span { display: inline-block; line-height: 1.25; }
+pre > code.sourceCode > span:empty { height: 1.2em; }
+.sourceCode { overflow: visible; }
+code.sourceCode > span { color: inherit; text-decoration: inherit; }
+div.sourceCode { margin: 1em 0; }
+pre.sourceCode { margin: 0; }
+@media screen {
+div.sourceCode { overflow: auto; }
+}
+@media print {
+pre > code.sourceCode { white-space: pre-wrap; }
+pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+}
+pre.numberSource code
+  { counter-reset: source-line 0; }
+pre.numberSource code > span
+  { position: relative; left: -4em; counter-increment: source-line; }
+pre.numberSource code > span > a:first-child::before
+  { content: counter(source-line);
+    position: relative; left: -1em; text-align: right; vertical-align: baseline;
+    border: none; display: inline-block;
+    -webkit-touch-callout: none; -webkit-user-select: none;
+    -khtml-user-select: none; -moz-user-select: none;
+    -ms-user-select: none; user-select: none;
+    padding: 0 4px; width: 4em;
+  }
+pre.numberSource { margin-left: 3em;  padding-left: 4px; }
+div.sourceCode
+  {   }
+@media screen {
+pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+}
+</style>
+
+
+<script src="AirbnbAB_files/libs/clipboard/clipboard.min.js"></script>
+<script src="AirbnbAB_files/libs/quarto-html/quarto.js"></script>
+<script src="AirbnbAB_files/libs/quarto-html/popper.min.js"></script>
+<script src="AirbnbAB_files/libs/quarto-html/tippy.umd.min.js"></script>
+<script src="AirbnbAB_files/libs/quarto-html/anchor.min.js"></script>
+<link href="AirbnbAB_files/libs/quarto-html/tippy.css" rel="stylesheet">
+<link href="AirbnbAB_files/libs/quarto-html/quarto-syntax-highlighting.css" rel="stylesheet" id="quarto-text-highlighting-styles">
+<script src="AirbnbAB_files/libs/bootstrap/bootstrap.min.js"></script>
+<link href="AirbnbAB_files/libs/bootstrap/bootstrap-icons.css" rel="stylesheet">
+<link href="AirbnbAB_files/libs/bootstrap/bootstrap.min.css" rel="stylesheet" id="quarto-bootstrap" data-mode="light">
+
+
+</head>
+
+<body class="fullcontent">
+
+<div id="quarto-content" class="page-columns page-rows-contents page-layout-article">
+
+<main class="content" id="quarto-document-content">
+
+<header id="title-block-header" class="quarto-title-block default">
+<div class="quarto-title">
+<h1 class="title">Airbnb - Revenue Management</h1>
+</div>
+
+
+
+<div class="quarto-title-meta">
+
+    <div>
+    <div class="quarto-title-meta-heading">Author</div>
+    <div class="quarto-title-meta-contents">
+             <p>David Gómez Sedas </p>
+          </div>
+  </div>
+    
+  
+    
+  </div>
+  
+
+</header>
+
+<p>A continuación se enumeran todas las librerías utilizadas en el AB:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb1"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(readr)</span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(tidyverse)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>── Attaching core tidyverse packages ──────────────────────── tidyverse 2.0.0 ──
+✔ dplyr     1.1.3     ✔ purrr     1.0.2
+✔ forcats   1.0.0     ✔ stringr   1.5.0
+✔ ggplot2   3.4.3     ✔ tibble    3.2.1
+✔ lubridate 1.9.2     ✔ tidyr     1.3.0
+── Conflicts ────────────────────────────────────────── tidyverse_conflicts() ──
+✖ dplyr::filter() masks stats::filter()
+✖ dplyr::lag()    masks stats::lag()
+ℹ Use the conflicted package (&lt;http://conflicted.r-lib.org/&gt;) to force all conflicts to become errors</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb3"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="fu">library</span>(quarto)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<section id="datos-usados" class="level1">
+<h1>Datos usados</h1>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb4"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> <span class="fu">read_csv</span>(<span class="st">"listings_bcn.csv"</span>, <span class="at">show_col_types =</span> <span class="cn">FALSE</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<section id="origen-de-los-datos" class="level2">
+<h2 class="anchored" data-anchor-id="origen-de-los-datos">Origen de los datos</h2>
+<p>Los datos han sido extraidos de “Inside Airbnb”, el cual es un proyecto que provee datos e información sobre el impacto que tiene Airbnb sobre las comunidades residenciales.</p>
+<p>La finalidad de este proyecto es trabajar en torno a una visión que consiste en informar a estas comunidades sobre el uso real de airbnb.</p>
+<p>Los datos son extraidos de la web de Airbnb oficial y son almacenados en archivos compatibles con datos tabulares para distribuirlos. Podemos encontrar que los datos están separados por ciudades y estos se suelen actualizar frecuentemente para mostrar una imagen lo mas actual posible.</p>
+<p>Todos los datos de la web estan licenciados bajo Creative Commons Attribution 4.0 International License.</p>
+<p>Concretamente, los datos utilizados en este trabajo consisten en todas las residencias activas en Airbnb de la ciudad de Barcelona. En ellas podemos encontar diferentes tipos de servicios: Apartamentos, casas, habitaciones y camas en habitaciones compartidas.</p>
+</section>
+<section id="contenido" class="level2">
+<h2 class="anchored" data-anchor-id="contenido">Contenido</h2>
+<p>Los datos utilizados consisten en unos datos tabulares los cuales consisten en 18086 entradas y 75 columnas.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb5"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="fu">str</span>(df)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>spc_tbl_ [18,086 × 75] (S3: spec_tbl_df/tbl_df/tbl/data.frame)
+ $ id                                          : num [1:18086] 18674 23197 117010 32711 118228 ...
+ $ listing_url                                 : chr [1:18086] "https://www.airbnb.com/rooms/18674" "https://www.airbnb.com/rooms/23197" "https://www.airbnb.com/rooms/117010" "https://www.airbnb.com/rooms/32711" ...
+ $ scrape_id                                   : num [1:18086] 2.02e+13 2.02e+13 2.02e+13 2.02e+13 2.02e+13 ...
+ $ last_scraped                                : Date[1:18086], format: "2023-09-06" "2023-09-06" ...
+ $ source                                      : chr [1:18086] "city scrape" "city scrape" "previous scrape" "city scrape" ...
+ $ name                                        : chr [1:18086] "Rental unit in Barcelona · ★4.30 · 3 bedrooms · 6 beds · 2 baths" "Rental unit in Sant Adria de Besos · ★4.77 · 3 bedrooms · 4 beds · 2 baths" "Rental unit in Barcelona · ★4.55 · 3 bedrooms · 6 beds · 2 baths" "Rental unit in Barcelona · ★4.46 · 2 bedrooms · 3 beds · 1.5 baths" ...
+ $ description                                 : chr [1:18086] "110m2 apartment to rent in Barcelona. Located in the Eixample district, near the Sagrada Familia. It has a smal"| __truncated__ "Beautiful spacious apartment, large terrace, 5 minutes walk from the CCIB center, sea, Port Forum.&lt;br /&gt;Excelle"| __truncated__ "Have an authentic Barcelona experience! Modern 100m2 recently decorated apartment - definitely one to consider "| __truncated__ "A lovely two bedroom apartment only 250 m from Barcelona's iconic Sagrada Familia.&lt;br /&gt;&lt;br /&gt;&lt;b&gt;The space&lt;/b&gt;&lt;"| __truncated__ ...
+ $ neighborhood_overview                       : chr [1:18086] "Apartment in Barcelona located in the heart of Eixample district, within only 150 m form the great Sagrada Fami"| __truncated__ "Strategically located in the Parc del Fòrum, a spacious area where all kinds of music festivals and events are "| __truncated__ "Apartment is located just 240 meters from Sagrada Familia. Right on Avenida Gaudí, a cozy boulevard that leads "| __truncated__ "What's nearby  &lt;br /&gt;This apartment is located in central Barcelona only 250m from the famous Sagrada Familia. "| __truncated__ ...
+ $ picture_url                                 : chr [1:18086] "https://a0.muscache.com/pictures/13031453/413cdbfc_original.jpg" "https://a0.muscache.com/pictures/miso/Hosting-23197/original/0820d261-5f12-4ac9-8604-fefa1c5ec62a.jpeg" "https://a0.muscache.com/pictures/4052d8b5-7352-41be-821d-4188eb99a89a.jpg" "https://a0.muscache.com/pictures/357b25e4-f414-48c5-aad0-e89342b1daa2.jpg" ...
+ $ host_id                                     : num [1:18086] 71615 90417 567180 135703 567180 ...
+ $ host_url                                    : chr [1:18086] "https://www.airbnb.com/users/show/71615" "https://www.airbnb.com/users/show/90417" "https://www.airbnb.com/users/show/567180" "https://www.airbnb.com/users/show/135703" ...
+ $ host_name                                   : chr [1:18086] "Mireia And Maria" "Etain (Marnie)" "Sandra" "Nick" ...
+ $ host_since                                  : Date[1:18086], format: "2010-01-19" "2010-03-09" ...
+ $ host_location                               : chr [1:18086] "Barcelona, Spain" "Catalonia, Spain" "Barcelona, Spain" "Barcelona, Spain" ...
+ $ host_about                                  : chr [1:18086] "We are Mireia (47) &amp; Maria (49), two multilingual entrepreneurs loving Barcelona and having big experience in t"| __truncated__ "Hi there, I'm marnie from Australia, though I have been living in Spain for many years.\nMy lovely co-host, Jak"| __truncated__ "Suite Home Sagrada Familia is a complex of apartments with 12 years of experience. \"Welcome to your home” is o"| __truncated__ "I'm Nick your English host in Barcelona.\r\n\r\nI'm a full time host with several holiday rental apartments tha"| __truncated__ ...
+ $ host_response_time                          : chr [1:18086] "within an hour" "within an hour" "within a few hours" "within an hour" ...
+ $ host_response_rate                          : chr [1:18086] "97%" "100%" "88%" "100%" ...
+ $ host_acceptance_rate                        : chr [1:18086] "90%" "94%" "98%" "100%" ...
+ $ host_is_superhost                           : logi [1:18086] FALSE TRUE FALSE FALSE FALSE FALSE ...
+ $ host_thumbnail_url                          : chr [1:18086] "https://a0.muscache.com/im/users/71615/profile_pic/1426612511/original.jpg?aki_policy=profile_small" "https://a0.muscache.com/im/pictures/user/44b56b17-e3c1-4fc9-a036-09edc5a0bbee.jpg?aki_policy=profile_small" "https://a0.muscache.com/im/pictures/user/7aaeb41d-1ee2-48cb-927a-c39c0868eb7d.jpg?aki_policy=profile_small" "https://a0.muscache.com/im/users/135703/profile_pic/1346864531/original.jpg?aki_policy=profile_small" ...
+ $ host_picture_url                            : chr [1:18086] "https://a0.muscache.com/im/users/71615/profile_pic/1426612511/original.jpg?aki_policy=profile_x_medium" "https://a0.muscache.com/im/pictures/user/44b56b17-e3c1-4fc9-a036-09edc5a0bbee.jpg?aki_policy=profile_x_medium" "https://a0.muscache.com/im/pictures/user/7aaeb41d-1ee2-48cb-927a-c39c0868eb7d.jpg?aki_policy=profile_x_medium" "https://a0.muscache.com/im/users/135703/profile_pic/1346864531/original.jpg?aki_policy=profile_x_medium" ...
+ $ host_neighbourhood                          : chr [1:18086] "la Sagrada Família" "El Besòs i el Maresme" "la Sagrada Familia" "Camp d'en Grassot i Gràcia Nova" ...
+ $ host_listings_count                         : num [1:18086] 47 6 19 3 19 1 34 3 34 2 ...
+ $ host_total_listings_count                   : num [1:18086] 48 9 19 15 19 1 50 4 50 2 ...
+ $ host_verifications                          : chr [1:18086] "['email', 'phone']" "['email', 'phone']" "['email', 'phone']" "['email', 'phone', 'work_email']" ...
+ $ host_has_profile_pic                        : logi [1:18086] TRUE TRUE TRUE TRUE TRUE TRUE ...
+ $ host_identity_verified                      : logi [1:18086] TRUE TRUE FALSE TRUE FALSE TRUE ...
+ $ neighbourhood                               : chr [1:18086] "Barcelona, CT, Spain" "Sant Adria de Besos, Barcelona, Spain" "Barcelona, Catalonia, Spain" "Barcelona, Catalonia, Spain" ...
+ $ neighbourhood_cleansed                      : chr [1:18086] "la Sagrada Família" "el Besòs i el Maresme" "la Sagrada Família" "el Camp d'en Grassot i Gràcia Nova" ...
+ $ neighbourhood_group_cleansed                : chr [1:18086] "Eixample" "Sant Martí" "Eixample" "Gràcia" ...
+ $ latitude                                    : num [1:18086] 41.4 41.4 41.4 41.4 41.4 ...
+ $ longitude                                   : num [1:18086] 2.17 2.22 2.17 2.17 2.17 ...
+ $ property_type                               : chr [1:18086] "Entire rental unit" "Entire rental unit" "Entire rental unit" "Entire rental unit" ...
+ $ room_type                                   : chr [1:18086] "Entire home/apt" "Entire home/apt" "Entire home/apt" "Entire home/apt" ...
+ $ accommodates                                : num [1:18086] 8 5 8 6 8 2 7 9 7 5 ...
+ $ bathrooms                                   : logi [1:18086] NA NA NA NA NA NA ...
+ $ bathrooms_text                              : chr [1:18086] "2 baths" "2 baths" "2 baths" "1.5 baths" ...
+ $ bedrooms                                    : num [1:18086] 3 3 3 2 3 1 3 4 3 2 ...
+ $ beds                                        : num [1:18086] 6 4 6 3 5 1 5 6 4 3 ...
+ $ amenities                                   : chr [1:18086] "[\"Refrigerator\", \"30\\\" TV\", \"Iron\", \"Hangers\", \"City skyline view\", \"Free washer \\u2013 In unit\""| __truncated__ "[\"Refrigerator\", \"Toaster\", \"Cleaning products\", \"Room-darkening shades\", \"Fire extinguisher\", \"Publ"| __truncated__ "[\"Refrigerator\", \"Clothing storage: closet and dresser\", \"Toaster\", \"Room-darkening shades\", \"Fire ext"| __truncated__ "[\"Refrigerator\", \"Fire extinguisher\", \"First aid kit\", \"Iron\", \"Hangers\", \"Paid parking off premises"| __truncated__ ...
+ $ price                                       : chr [1:18086] "$202.00" "$255.00" "$331.00" "$171.00" ...
+ $ minimum_nights                              : num [1:18086] 1 3 2 21 2 3 3 5 3 90 ...
+ $ maximum_nights                              : num [1:18086] 1125 300 30 31 28 ...
+ $ minimum_minimum_nights                      : num [1:18086] 1 3 2 1 2 3 2 2 3 90 ...
+ $ maximum_minimum_nights                      : num [1:18086] 4 5 3 1 3 3 6 5 6 90 ...
+ $ minimum_maximum_nights                      : num [1:18086] 1125 1125 30 31 28 ...
+ $ maximum_maximum_nights                      : num [1:18086] 1125 1125 32 31 32 ...
+ $ minimum_nights_avg_ntm                      : num [1:18086] 2.2 3.2 2 1 2.1 3 3.3 4.9 3.3 90 ...
+ $ maximum_nights_avg_ntm                      : num [1:18086] 1125 1125 30.3 31 28.7 ...
+ $ calendar_updated                            : logi [1:18086] NA NA NA NA NA NA ...
+ $ has_availability                            : logi [1:18086] TRUE TRUE FALSE TRUE FALSE TRUE ...
+ $ availability_30                             : num [1:18086] 4 16 0 6 0 2 7 5 6 30 ...
+ $ availability_60                             : num [1:18086] 11 31 0 17 0 9 18 20 12 60 ...
+ $ availability_90                             : num [1:18086] 21 61 0 43 0 32 18 38 31 90 ...
+ $ availability_365                            : num [1:18086] 34 150 0 310 0 303 266 194 279 365 ...
+ $ calendar_last_scraped                       : Date[1:18086], format: "2023-09-06" "2023-09-06" ...
+ $ number_of_reviews                           : num [1:18086] 38 73 48 95 50 395 32 211 85 131 ...
+ $ number_of_reviews_ltm                       : num [1:18086] 8 11 6 21 18 62 14 31 33 0 ...
+ $ number_of_reviews_l30d                      : num [1:18086] 0 1 1 1 0 6 1 2 1 0 ...
+ $ first_review                                : Date[1:18086], format: "2013-05-27" "2011-03-15" ...
+ $ last_review                                 : Date[1:18086], format: "2023-06-26" "2023-08-15" ...
+ $ review_scores_rating                        : num [1:18086] 4.3 4.77 4.55 4.46 4.56 4.86 4.56 4.53 4.43 4.64 ...
+ $ review_scores_accuracy                      : num [1:18086] 4.41 4.93 4.59 4.44 4.5 4.9 4.81 4.61 4.64 4.74 ...
+ $ review_scores_cleanliness                   : num [1:18086] 4.62 4.89 4.57 4.47 4.62 4.93 4.75 4.62 4.48 4.68 ...
+ $ review_scores_checkin                       : num [1:18086] 4.76 4.94 4.82 4.86 4.56 4.93 4.84 4.68 4.79 4.69 ...
+ $ review_scores_communication                 : num [1:18086] 4.65 4.99 4.91 4.85 4.74 4.9 4.78 4.69 4.81 4.8 ...
+ $ review_scores_location                      : num [1:18086] 4.78 4.6 4.86 4.86 4.9 4.72 4.81 4.69 4.88 4.83 ...
+ $ review_scores_value                         : num [1:18086] 4.27 4.64 4.59 4.52 4.52 4.82 4.38 4.43 4.32 4.56 ...
+ $ license                                     : chr [1:18086] "HUTB-002062" "HUTB005057" "HUTB000331" "HUTB-001722" ...
+ $ instant_bookable                            : logi [1:18086] TRUE FALSE FALSE TRUE FALSE FALSE ...
+ $ calculated_host_listings_count              : num [1:18086] 30 2 19 3 19 1 32 2 32 2 ...
+ $ calculated_host_listings_count_entire_homes : num [1:18086] 30 2 19 3 19 1 32 2 32 2 ...
+ $ calculated_host_listings_count_private_rooms: num [1:18086] 0 0 0 0 0 0 0 0 0 0 ...
+ $ calculated_host_listings_count_shared_rooms : num [1:18086] 0 0 0 0 0 0 0 0 0 0 ...
+ $ reviews_per_month                           : num [1:18086] 0.3 0.48 0.33 0.64 0.34 2.7 0.28 1.34 0.67 0.9 ...
+ - attr(*, "spec")=
+  .. cols(
+  ..   id = col_double(),
+  ..   listing_url = col_character(),
+  ..   scrape_id = col_double(),
+  ..   last_scraped = col_date(format = ""),
+  ..   source = col_character(),
+  ..   name = col_character(),
+  ..   description = col_character(),
+  ..   neighborhood_overview = col_character(),
+  ..   picture_url = col_character(),
+  ..   host_id = col_double(),
+  ..   host_url = col_character(),
+  ..   host_name = col_character(),
+  ..   host_since = col_date(format = ""),
+  ..   host_location = col_character(),
+  ..   host_about = col_character(),
+  ..   host_response_time = col_character(),
+  ..   host_response_rate = col_character(),
+  ..   host_acceptance_rate = col_character(),
+  ..   host_is_superhost = col_logical(),
+  ..   host_thumbnail_url = col_character(),
+  ..   host_picture_url = col_character(),
+  ..   host_neighbourhood = col_character(),
+  ..   host_listings_count = col_double(),
+  ..   host_total_listings_count = col_double(),
+  ..   host_verifications = col_character(),
+  ..   host_has_profile_pic = col_logical(),
+  ..   host_identity_verified = col_logical(),
+  ..   neighbourhood = col_character(),
+  ..   neighbourhood_cleansed = col_character(),
+  ..   neighbourhood_group_cleansed = col_character(),
+  ..   latitude = col_double(),
+  ..   longitude = col_double(),
+  ..   property_type = col_character(),
+  ..   room_type = col_character(),
+  ..   accommodates = col_double(),
+  ..   bathrooms = col_logical(),
+  ..   bathrooms_text = col_character(),
+  ..   bedrooms = col_double(),
+  ..   beds = col_double(),
+  ..   amenities = col_character(),
+  ..   price = col_character(),
+  ..   minimum_nights = col_double(),
+  ..   maximum_nights = col_double(),
+  ..   minimum_minimum_nights = col_double(),
+  ..   maximum_minimum_nights = col_double(),
+  ..   minimum_maximum_nights = col_double(),
+  ..   maximum_maximum_nights = col_double(),
+  ..   minimum_nights_avg_ntm = col_double(),
+  ..   maximum_nights_avg_ntm = col_double(),
+  ..   calendar_updated = col_logical(),
+  ..   has_availability = col_logical(),
+  ..   availability_30 = col_double(),
+  ..   availability_60 = col_double(),
+  ..   availability_90 = col_double(),
+  ..   availability_365 = col_double(),
+  ..   calendar_last_scraped = col_date(format = ""),
+  ..   number_of_reviews = col_double(),
+  ..   number_of_reviews_ltm = col_double(),
+  ..   number_of_reviews_l30d = col_double(),
+  ..   first_review = col_date(format = ""),
+  ..   last_review = col_date(format = ""),
+  ..   review_scores_rating = col_double(),
+  ..   review_scores_accuracy = col_double(),
+  ..   review_scores_cleanliness = col_double(),
+  ..   review_scores_checkin = col_double(),
+  ..   review_scores_communication = col_double(),
+  ..   review_scores_location = col_double(),
+  ..   review_scores_value = col_double(),
+  ..   license = col_character(),
+  ..   instant_bookable = col_logical(),
+  ..   calculated_host_listings_count = col_double(),
+  ..   calculated_host_listings_count_entire_homes = col_double(),
+  ..   calculated_host_listings_count_private_rooms = col_double(),
+  ..   calculated_host_listings_count_shared_rooms = col_double(),
+  ..   reviews_per_month = col_double()
+  .. )
+ - attr(*, "problems")=&lt;externalptr&gt; </code></pre>
+</div>
+</div>
+<p>En el archivo encontramos cuatro tipos de datos distintos:</p>
+<ul>
+<li><p>double</p></li>
+<li><p>character</p></li>
+<li><p>logical</p></li>
+<li><p>date</p></li>
+</ul>
+<p>Los datos nos hablan de todos los apartados relacionados con el alojamiento ofrecido, la información del host, el precio medio, la disponibilidad, imagenes de los alojamientos e información de las reseñas.</p>
+</section>
+<section id="muestra-de-los-datos" class="level2">
+<h2 class="anchored" data-anchor-id="muestra-de-los-datos">Muestra de los datos</h2>
+<p>A continuación, una muestra de los datos obtenidos:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb7"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="fu">head</span>(df)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 6 × 75
+      id listing_url             scrape_id last_scraped source name  description
+   &lt;dbl&gt; &lt;chr&gt;                       &lt;dbl&gt; &lt;date&gt;       &lt;chr&gt;  &lt;chr&gt; &lt;chr&gt;      
+1  18674 https://www.airbnb.com…   2.02e13 2023-09-06   city … Rent… 110m2 apar…
+2  23197 https://www.airbnb.com…   2.02e13 2023-09-06   city … Rent… Beautiful …
+3 117010 https://www.airbnb.com…   2.02e13 2023-09-06   previ… Rent… Have an au…
+4  32711 https://www.airbnb.com…   2.02e13 2023-09-06   city … Rent… A lovely t…
+5 118228 https://www.airbnb.com…   2.02e13 2023-09-06   previ… Rent… Modern 100…
+6 128463 https://www.airbnb.com…   2.02e13 2023-09-06   city … Rent… My House i…
+# ℹ 68 more variables: neighborhood_overview &lt;chr&gt;, picture_url &lt;chr&gt;,
+#   host_id &lt;dbl&gt;, host_url &lt;chr&gt;, host_name &lt;chr&gt;, host_since &lt;date&gt;,
+#   host_location &lt;chr&gt;, host_about &lt;chr&gt;, host_response_time &lt;chr&gt;,
+#   host_response_rate &lt;chr&gt;, host_acceptance_rate &lt;chr&gt;,
+#   host_is_superhost &lt;lgl&gt;, host_thumbnail_url &lt;chr&gt;, host_picture_url &lt;chr&gt;,
+#   host_neighbourhood &lt;chr&gt;, host_listings_count &lt;dbl&gt;,
+#   host_total_listings_count &lt;dbl&gt;, host_verifications &lt;chr&gt;, …</code></pre>
+</div>
+</div>
+</section>
+</section>
+<section id="objetivo-del-proyecto" class="level1">
+<h1>Objetivo del proyecto</h1>
+<p>El objetivo con el análisis de datos es crear un modelo el cual enseñe a actuales o futuros propietarios de alojamientos de airbnb a obtener los máximos ingresos posibles teniendo en cuenta todas las características en del alojamiento y su perfil en Airbnb.</p>
+<p>El modelo a entrenar es de aprendizaje supervisado y continuo de regresión lineal.</p>
+</section>
+<section id="limpieza-de-datos" class="level1">
+<h1>Limpieza de datos</h1>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb9"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> <span class="fu">subset</span>(df, <span class="at">select =</span> <span class="fu">c</span>(host_response_time, host_response_rate, host_acceptance_rate, host_total_listings_count, host_verifications, neighbourhood_cleansed, neighbourhood_group_cleansed, property_type, room_type, accommodates, bathrooms_text, bedrooms, beds, amenities, price, minimum_nights, maximum_nights, availability_30, availability_60, availability_90, availability_365, number_of_reviews, number_of_reviews_ltm, number_of_reviews_l30d, review_scores_rating, review_scores_accuracy, review_scores_cleanliness, review_scores_checkin, review_scores_communication, review_scores_location, review_scores_value, instant_bookable, reviews_per_month))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<section id="ajustes-de-formato" class="level2">
+<h2 class="anchored" data-anchor-id="ajustes-de-formato">Ajustes de formato</h2>
+<section id="host_response_time" class="level3">
+<h3 class="anchored" data-anchor-id="host_response_time">host_response_time</h3>
+<p>Nos encontramos con variables categoricas en diferentes medidas de tiempo. Sería conveniente ajustar todas estas pora que estén en la misma medida de tiempo.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb10"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="fu">unique</span>(df<span class="sc">$</span>host_response_time)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "within an hour"     "within a few hours" "within a day"      
+[4] "N/A"                "a few days or more" NA                  </code></pre>
+</div>
+</div>
+<p>Encontramos seis valores. A continuación listamos las diferentes categorías y su nuevo valor: - “within an hour” -&gt; &lt;1h - “within a few hours” -&gt; ~12h - “within a day -&gt; &lt;24h -”a few days or more” -&gt; &gt;48h - “N/A” -&gt; Unificar con NA</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb12"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a>df<span class="sc">$</span>host_response_time <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(df<span class="sc">$</span>host_response_time <span class="sc">==</span> <span class="st">"within an hour"</span>, <span class="st">"&lt;1h"</span>,</span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>                        <span class="fu">ifelse</span>(df<span class="sc">$</span>host_response_time <span class="sc">==</span> <span class="st">"within a few hours"</span>, <span class="st">"~12h"</span>,</span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>                        <span class="fu">ifelse</span>(df<span class="sc">$</span>host_response_time <span class="sc">==</span> <span class="st">"within a day"</span>, <span class="st">"~24h"</span>,</span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>                        <span class="fu">ifelse</span>(df<span class="sc">$</span>host_response_time <span class="sc">==</span> <span class="st">"a few days or more"</span>, <span class="st">"&gt;48h"</span>,</span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>                        <span class="fu">ifelse</span>(df<span class="sc">$</span>host_response_time <span class="sc">==</span> <span class="st">"N/A"</span>, <span class="cn">NA</span>, df<span class="sc">$</span>host_response_time)))))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="bathrooms_text" class="level3">
+<h3 class="anchored" data-anchor-id="bathrooms_text">bathrooms_text</h3>
+<p>Esta variable incluye el valor númerico de baños y además nos indica si estos son compartidos o no. Para la claridad en los datos sería conveniente crear dos variables de esta:</p>
+<ol type="1">
+<li><p>Una variable número con el número de baños.</p></li>
+<li><p>Un Boolean indicando si estos son compartidos o no.</p></li>
+</ol>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb13"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="fu">unique</span>(df<span class="sc">$</span>bathrooms_text)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code> [1] "2 baths"           "1.5 baths"         "2.5 baths"        
+ [4] "3 baths"           "1 shared bath"     "1 bath"           
+ [7] "1 private bath"    "3.5 baths"         "4 baths"          
+[10] "1.5 shared baths"  NA                  "2 shared baths"   
+[13] "2.5 shared baths"  "5.5 baths"         "7.5 baths"        
+[16] "4.5 baths"         "6 baths"           "0 shared baths"   
+[19] "Half-bath"         "Private half-bath" "0 baths"          
+[22] "5 baths"           "8 baths"           "3 shared baths"   
+[25] "8 shared baths"    "4 shared baths"    "Shared half-bath" 
+[28] "5 shared baths"    "3.5 shared baths"  "6 shared baths"   
+[31] "5.5 shared baths"  "10 baths"          "10 shared baths"  
+[34] "6.5 baths"         "4.5 shared baths" </code></pre>
+</div>
+</div>
+<p>Vemos que casi todas las categorías tienen números. A excepción de tres de ellas. Vamos a añadirselo para compartir la estructura:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb15"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a>df<span class="sc">$</span>bathrooms_text <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(df<span class="sc">$</span>bathrooms_text <span class="sc">==</span> <span class="st">"Shared half-bath"</span>, <span class="st">"0.5 Shared bath"</span>,</span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>                            <span class="fu">ifelse</span>(df<span class="sc">$</span>bathrooms_text <span class="sc">==</span> <span class="st">"Private half-bath"</span>, <span class="st">"0.5 bath"</span>,</span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>                            <span class="fu">ifelse</span>(df<span class="sc">$</span>bathrooms_text <span class="sc">==</span> <span class="st">"Half-bath"</span>, <span class="st">"0.5 bath"</span>, df<span class="sc">$</span>bathrooms_text)))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>A continuación creamos la columna boolean la cual nos indica si un baño es compartido o no (Asumimos que si no es indicado, es privado).</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb16"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb16-1"><a href="#cb16-1" aria-hidden="true" tabindex="-1"></a>df<span class="sc">$</span>shared_bathrooms <span class="ot">&lt;-</span> <span class="fu">grepl</span>(<span class="st">"shared|Shared"</span>, df<span class="sc">$</span>bathrooms_text)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Seguidamente creamos una nueva columna que extraiga el número de baños del valor bathrooms_text</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb17"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb17-1"><a href="#cb17-1" aria-hidden="true" tabindex="-1"></a>df<span class="sc">$</span>n_bathrooms <span class="ot">&lt;-</span> <span class="fu">sapply</span>(<span class="fu">strsplit</span>(df<span class="sc">$</span>bathrooms_text, <span class="st">" "</span>), <span class="cf">function</span>(x) <span class="fu">as.numeric</span>(x[<span class="dv">1</span>]))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Recolocamos las columnas en la posición de bathrooms_text y eliminamos esta.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb18"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb18-1"><a href="#cb18-1" aria-hidden="true" tabindex="-1"></a>bathrooms_text_position <span class="ot">&lt;-</span> <span class="fu">which</span>(<span class="fu">colnames</span>(df) <span class="sc">==</span> <span class="st">"bathrooms_text"</span>)</span>
+<span id="cb18-2"><a href="#cb18-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb18-3"><a href="#cb18-3" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> df <span class="sc">%&gt;%</span></span>
+<span id="cb18-4"><a href="#cb18-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">relocate</span>(<span class="fu">all_of</span>(<span class="fu">c</span>(<span class="st">"n_bathrooms"</span>, <span class="st">"shared_bathrooms"</span>)), <span class="at">.before =</span> bathrooms_text_position)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: Using an external vector in selections was deprecated in tidyselect 1.1.0.
+ℹ Please use `all_of()` or `any_of()` instead.
+  # Was:
+  data %&gt;% select(bathrooms_text_position)
+
+  # Now:
+  data %&gt;% select(all_of(bathrooms_text_position))
+
+See &lt;https://tidyselect.r-lib.org/reference/faq-external-vector.html&gt;.</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb20"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb20-1"><a href="#cb20-1" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> df <span class="sc">%&gt;%</span></span>
+<span id="cb20-2"><a href="#cb20-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>bathrooms_text)</span>
+<span id="cb20-3"><a href="#cb20-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb20-4"><a href="#cb20-4" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(bathrooms_text_position)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="host_verifications" class="level3">
+<h3 class="anchored" data-anchor-id="host_verifications">host_verifications</h3>
+<p>En esta variable podemos ver en formato lista, los medios por los cuales se ha verificado un host. Para que los datos sean mas accesibles podemos crear una variable de tipo boolean por cada tipo de medio posible de verificación.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb21"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb21-1"><a href="#cb21-1" aria-hidden="true" tabindex="-1"></a><span class="fu">unique</span>(df<span class="sc">$</span>host_verifications)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code>[1] "['email', 'phone']"               "['email', 'phone', 'work_email']"
+[3] "['phone', 'work_email']"          "['phone']"                       
+[5] "['email']"                        "None"                            
+[7] "[]"                               "['work_email']"                  </code></pre>
+</div>
+</div>
+<p>Encontramos tres tipos de verificación:</p>
+<ul>
+<li><p>“email”</p></li>
+<li><p>“phone”</p></li>
+<li><p>“work_email”</p></li>
+</ul>
+<p>Creamos las tres variables y añadimos true si ese método está incluido en la columna host_verifications.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb23"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb23-1"><a href="#cb23-1" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> df <span class="sc">%&gt;%</span></span>
+<span id="cb23-2"><a href="#cb23-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(<span class="at">verification_email =</span> <span class="fu">str_detect</span>(df<span class="sc">$</span>host_verifications, <span class="st">"email"</span>),</span>
+<span id="cb23-3"><a href="#cb23-3" aria-hidden="true" tabindex="-1"></a>         <span class="at">verification_phone =</span> <span class="fu">str_detect</span>(df<span class="sc">$</span>host_verifications, <span class="st">"phone"</span>),</span>
+<span id="cb23-4"><a href="#cb23-4" aria-hidden="true" tabindex="-1"></a>         <span class="at">verification_work_email =</span> <span class="fu">str_detect</span>(df<span class="sc">$</span>host_verifications, <span class="st">"work_email"</span>))</span>
+<span id="cb23-5"><a href="#cb23-5" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-6"><a href="#cb23-6" aria-hidden="true" tabindex="-1"></a>host_verification_text_position <span class="ot">&lt;-</span> <span class="fu">which</span>(<span class="fu">colnames</span>(df) <span class="sc">==</span> <span class="st">"host_verifications"</span>)</span>
+<span id="cb23-7"><a href="#cb23-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb23-8"><a href="#cb23-8" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> df <span class="sc">%&gt;%</span></span>
+<span id="cb23-9"><a href="#cb23-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">relocate</span>(<span class="fu">all_of</span>(<span class="fu">c</span>(<span class="st">"verification_email"</span>, <span class="st">"verification_phone"</span>, <span class="st">"verification_work_email"</span>)), <span class="at">.before =</span> host_verification_text_position)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: Using an external vector in selections was deprecated in tidyselect 1.1.0.
+ℹ Please use `all_of()` or `any_of()` instead.
+  # Was:
+  data %&gt;% select(host_verification_text_position)
+
+  # Now:
+  data %&gt;% select(all_of(host_verification_text_position))
+
+See &lt;https://tidyselect.r-lib.org/reference/faq-external-vector.html&gt;.</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb25"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb25-1"><a href="#cb25-1" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> df <span class="sc">%&gt;%</span></span>
+<span id="cb25-2"><a href="#cb25-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">select</span>(<span class="sc">-</span>host_verifications)</span>
+<span id="cb25-3"><a href="#cb25-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb25-4"><a href="#cb25-4" aria-hidden="true" tabindex="-1"></a><span class="fu">rm</span>(host_verification_text_position)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="price" class="level3">
+<h3 class="anchored" data-anchor-id="price">price</h3>
+<p>Podemos convertir price en una variable numérica para poderla usar en visualizaciones y otros tipos de funciones de tipo continuo:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb26"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb26-1"><a href="#cb26-1" aria-hidden="true" tabindex="-1"></a>df<span class="sc">$</span>price <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(<span class="fu">gsub</span>(<span class="st">"</span><span class="sc">\\</span><span class="st">$"</span>, <span class="st">""</span>, df<span class="sc">$</span>price))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: NAs introduced by coercion</code></pre>
+</div>
+</div>
+</section>
+<section id="amenities" class="level3">
+<h3 class="anchored" data-anchor-id="amenities">amenities</h3>
+<p>En esta variable encontramos un formato lista con varios elementos, sin embargo, no es conveniente desagruparlos ahora de cara a los análisis descriptivos de los datos a causa de la cantidad elevada que hay. Luego podremos desagruparlos cuando lo necesitemos.</p>
+</section>
+<section id="review_score_rating" class="level3">
+<h3 class="anchored" data-anchor-id="review_score_rating">review_score_rating</h3>
+<p>El valor mínimo que puede tener un alojamiento es 1. En algunos campos pone 0 a causa de que el resto de valores son NA. Vamos a modificar estos valores a NA.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb28"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb28-1"><a href="#cb28-1" aria-hidden="true" tabindex="-1"></a>df<span class="sc">$</span>review_scores_rating <span class="ot">&lt;-</span> <span class="fu">ifelse</span>(df<span class="sc">$</span>review_scores_rating <span class="sc">==</span> <span class="dv">0</span>, <span class="cn">NA</span>, df<span class="sc">$</span>review_scores_rating)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+<section id="host_response_rate-y-host_acceptance_rate" class="level3">
+<h3 class="anchored" data-anchor-id="host_response_rate-y-host_acceptance_rate">host_response_rate y host_acceptance_rate</h3>
+<p>Cambiamos ambas variables de tipo character con porcentaje a tipo numérico double:</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb29"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb29-1"><a href="#cb29-1" aria-hidden="true" tabindex="-1"></a>df<span class="sc">$</span>host_response_rate <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(<span class="fu">sub</span>(<span class="st">"%"</span>, <span class="st">""</span>, df<span class="sc">$</span>host_response_rate))<span class="sc">/</span><span class="dv">100</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: NAs introduced by coercion</code></pre>
+</div>
+<div class="sourceCode cell-code" id="cb31"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb31-1"><a href="#cb31-1" aria-hidden="true" tabindex="-1"></a>df<span class="sc">$</span>host_acceptance_rate <span class="ot">&lt;-</span> <span class="fu">as.numeric</span>(<span class="fu">sub</span>(<span class="st">"%"</span>, <span class="st">""</span>, df<span class="sc">$</span>host_acceptance_rate))<span class="sc">/</span><span class="dv">100</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: NAs introduced by coercion</code></pre>
+</div>
+</div>
+</section>
+<section id="conversión-de-campos-con-tags-en-factores" class="level3">
+<h3 class="anchored" data-anchor-id="conversión-de-campos-con-tags-en-factores">Conversión de campos con tags en factores</h3>
+<p>Cambiamos todas las columnas de tipos strings que tengan etiquetas a tipo factor para que su uso sea mas sencillo.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb33"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb33-1"><a href="#cb33-1" aria-hidden="true" tabindex="-1"></a>df <span class="ot">&lt;-</span> df <span class="sc">%&gt;%</span></span>
+<span id="cb33-2"><a href="#cb33-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">mutate</span>(</span>
+<span id="cb33-3"><a href="#cb33-3" aria-hidden="true" tabindex="-1"></a>    <span class="at">host_response_time =</span> <span class="fu">factor</span>(host_response_time),</span>
+<span id="cb33-4"><a href="#cb33-4" aria-hidden="true" tabindex="-1"></a>    <span class="at">neighbourhood_cleansed =</span> <span class="fu">factor</span>(neighbourhood_cleansed),</span>
+<span id="cb33-5"><a href="#cb33-5" aria-hidden="true" tabindex="-1"></a>    <span class="at">neighbourhood_group_cleansed =</span> <span class="fu">factor</span>(neighbourhood_group_cleansed),</span>
+<span id="cb33-6"><a href="#cb33-6" aria-hidden="true" tabindex="-1"></a>    <span class="at">property_type =</span> <span class="fu">factor</span>(property_type),</span>
+<span id="cb33-7"><a href="#cb33-7" aria-hidden="true" tabindex="-1"></a>    <span class="at">room_type =</span> <span class="fu">factor</span>(room_type)</span>
+<span id="cb33-8"><a href="#cb33-8" aria-hidden="true" tabindex="-1"></a>  )</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+</section>
+<section id="tratamiento-de-nas" class="level2">
+<h2 class="anchored" data-anchor-id="tratamiento-de-nas">Tratamiento de NA’s</h2>
+<section id="análisis-de-los-valores-faltantes" class="level3">
+<h3 class="anchored" data-anchor-id="análisis-de-los-valores-faltantes">Análisis de los valores faltantes</h3>
+<p>Comprobamos cuantos NA’s faltan en cada columna para ver que tratamiento hacer con ellos.</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb34"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb34-1"><a href="#cb34-1" aria-hidden="true" tabindex="-1"></a>na_analysis <span class="ot">&lt;-</span> df <span class="sc">%&gt;%</span> <span class="fu">summarize</span>(<span class="fu">across</span>(<span class="fu">everything</span>(), <span class="sc">~</span><span class="fu">sum</span>(<span class="fu">is.na</span>(.))))</span>
+<span id="cb34-2"><a href="#cb34-2" aria-hidden="true" tabindex="-1"></a>na_analysis</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code># A tibble: 1 × 36
+  host_response_time host_response_rate host_acceptance_rate
+               &lt;int&gt;              &lt;int&gt;                &lt;int&gt;
+1               2963               2963                 2685
+# ℹ 33 more variables: host_total_listings_count &lt;int&gt;,
+#   verification_email &lt;int&gt;, verification_phone &lt;int&gt;,
+#   verification_work_email &lt;int&gt;, neighbourhood_cleansed &lt;int&gt;,
+#   neighbourhood_group_cleansed &lt;int&gt;, property_type &lt;int&gt;, room_type &lt;int&gt;,
+#   accommodates &lt;int&gt;, n_bathrooms &lt;int&gt;, shared_bathrooms &lt;int&gt;,
+#   bedrooms &lt;int&gt;, beds &lt;int&gt;, amenities &lt;int&gt;, price &lt;int&gt;,
+#   minimum_nights &lt;int&gt;, maximum_nights &lt;int&gt;, availability_30 &lt;int&gt;, …</code></pre>
+</div>
+</div>
+<p>Vamos a usar el promedio de cada columna para substituir los NA’s</p>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb36"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb36-1"><a href="#cb36-1" aria-hidden="true" tabindex="-1"></a>columnas_para_redondear <span class="ot">&lt;-</span> <span class="fu">c</span>(<span class="st">"host_total_listing_count"</span>, <span class="st">"bedrooms"</span>)</span>
+<span id="cb36-2"><a href="#cb36-2" aria-hidden="true" tabindex="-1"></a><span class="cf">for</span> (i <span class="cf">in</span> <span class="dv">1</span><span class="sc">:</span><span class="fu">ncol</span>(df)) {</span>
+<span id="cb36-3"><a href="#cb36-3" aria-hidden="true" tabindex="-1"></a>  <span class="cf">if</span> (<span class="fu">is.numeric</span>(df[[i]])) {</span>
+<span id="cb36-4"><a href="#cb36-4" aria-hidden="true" tabindex="-1"></a>    promedio <span class="ot">&lt;-</span> <span class="fu">mean</span>(df[[i]], <span class="at">na.rm =</span> <span class="cn">TRUE</span>)</span>
+<span id="cb36-5"><a href="#cb36-5" aria-hidden="true" tabindex="-1"></a>    df[[i]][<span class="fu">is.na</span>(df[[i]])] <span class="ot">&lt;-</span> promedio</span>
+<span id="cb36-6"><a href="#cb36-6" aria-hidden="true" tabindex="-1"></a>    <span class="cf">if</span> (<span class="fu">colnames</span>(df)[i] <span class="sc">%in%</span> columnas_para_redondear) {</span>
+<span id="cb36-7"><a href="#cb36-7" aria-hidden="true" tabindex="-1"></a>      df[[i]] <span class="ot">&lt;-</span> <span class="fu">round</span>(df[[i]])</span>
+<span id="cb36-8"><a href="#cb36-8" aria-hidden="true" tabindex="-1"></a>    }</span>
+<span id="cb36-9"><a href="#cb36-9" aria-hidden="true" tabindex="-1"></a>  } </span>
+<span id="cb36-10"><a href="#cb36-10" aria-hidden="true" tabindex="-1"></a>} </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<p>Redondeamos las columnas que deberian tener valores enteros y no decimales.</p>
+</section>
+</section>
+</section>
+<section id="análisis-descriptivo-de-los-datos" class="level1">
+<h1>Análisis descriptivo de los datos</h1>
+<p>Vamos a crear una variante del dataset, para la que solo incluir aquellos datos que nos interesen para el análisis descriptivo de los datos:</p>
+<section id="summary" class="level2">
+<h2 class="anchored" data-anchor-id="summary">Summary</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb37"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb37-1"><a href="#cb37-1" aria-hidden="true" tabindex="-1"></a><span class="fu">summary</span>(df)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stdout">
+<pre><code> host_response_time host_response_rate host_acceptance_rate
+ &lt;1h :10879         Min.   :0.0000     Min.   :0.0000      
+ &gt;48h:  293         1st Qu.:0.9425     1st Qu.:0.8713      
+ ~12h: 2393         Median :0.9900     Median :0.9700      
+ ~24h: 1558         Mean   :0.9425     Mean   :0.8713      
+ NA's: 2963         3rd Qu.:1.0000     3rd Qu.:1.0000      
+                    Max.   :1.0000     Max.   :1.0000      
+                                                           
+ host_total_listings_count verification_email verification_phone
+ Min.   :   1.00           Mode :logical      Mode :logical     
+ 1st Qu.:   2.00           FALSE:1264         FALSE:43          
+ Median :   9.00           TRUE :16822        TRUE :18043       
+ Mean   :  53.55                                                
+ 3rd Qu.:  48.00                                                
+ Max.   :1853.00                                                
+                                                                
+ verification_work_email                           neighbourhood_cleansed
+ Mode :logical           la Dreta de l'Eixample               :2233      
+ FALSE:15153             el Raval                             :1456      
+ TRUE :2933              el Barri Gòtic                       :1232      
+                         Sant Pere, Santa Caterina i la Ribera:1125      
+                         la Vila de Gràcia                    :1064      
+                         l'Antiga Esquerra de l'Eixample      :1027      
+                         (Other)                              :9949      
+      neighbourhood_group_cleansed                     property_type 
+ Eixample           :6469          Entire rental unit         :9192  
+ Ciutat Vella       :4218          Private room in rental unit:5577  
+ Sants-Montjuïc     :1883          Entire serviced apartment  : 495  
+ Sant Martí         :1662          Room in hotel              : 406  
+ Gràcia             :1591          Entire condo               : 373  
+ Sarrià-Sant Gervasi: 890          Entire loft                : 293  
+ (Other)            :1373          (Other)                    :1750  
+           room_type      accommodates     n_bathrooms     shared_bathrooms
+ Entire home/apt:10622   Min.   : 1.000   Min.   : 0.000   Mode :logical   
+ Hotel room     :  134   1st Qu.: 2.000   1st Qu.: 1.000   FALSE:13774     
+ Private room   : 7173   Median : 3.000   Median : 1.000   TRUE :4312      
+ Shared room    :  157   Mean   : 3.365   Mean   : 1.358                   
+                         3rd Qu.: 4.000   3rd Qu.: 2.000                   
+                         Max.   :16.000   Max.   :10.000                   
+                                                                           
+    bedrooms           beds         amenities             price      
+ Min.   : 1.000   Min.   : 1.000   Length:18086       Min.   :  8.0  
+ 1st Qu.: 2.000   1st Qu.: 1.000   Class :character   1st Qu.: 52.0  
+ Median : 2.000   Median : 2.000   Mode  :character   Median :100.0  
+ Mean   : 2.043   Mean   : 2.358                      Mean   :135.1  
+ 3rd Qu.: 2.000   3rd Qu.: 3.000                      3rd Qu.:182.0  
+ Max.   :12.000   Max.   :30.000                      Max.   :999.0  
+                                                                     
+ minimum_nights    maximum_nights   availability_30  availability_60
+ Min.   :   1.00   Min.   :   1.0   Min.   : 0.000   Min.   : 0.00  
+ 1st Qu.:   1.00   1st Qu.: 180.2   1st Qu.: 0.000   1st Qu.: 0.00  
+ Median :   3.00   Median : 365.0   Median : 4.000   Median :13.00  
+ Mean   :  14.76   Mean   : 574.4   Mean   : 7.718   Mean   :19.37  
+ 3rd Qu.:  31.00   3rd Qu.:1125.0   3rd Qu.:12.000   3rd Qu.:34.00  
+ Max.   :1125.00   Max.   :3000.0   Max.   :30.000   Max.   :60.00  
+                                                                    
+ availability_90 availability_365 number_of_reviews number_of_reviews_ltm
+ Min.   : 0.00   Min.   :  0.0    Min.   :   0.00   Min.   :  0.00       
+ 1st Qu.: 1.00   1st Qu.: 47.0    1st Qu.:   1.00   1st Qu.:  0.00       
+ Median :35.00   Median :175.0    Median :   6.00   Median :  2.00       
+ Mean   :36.43   Mean   :171.8    Mean   :  42.22   Mean   : 11.44       
+ 3rd Qu.:62.00   3rd Qu.:302.0    3rd Qu.:  42.00   3rd Qu.: 15.00       
+ Max.   :90.00   Max.   :365.0    Max.   :1817.00   Max.   :836.00       
+                                                                         
+ number_of_reviews_l30d review_scores_rating review_scores_accuracy
+ Min.   : 0.0000        Min.   :1.000        Min.   :0.000         
+ 1st Qu.: 0.0000        1st Qu.:4.510        1st Qu.:4.610         
+ Median : 0.0000        Median :4.566        Median :4.621         
+ Mean   : 0.9239        Mean   :4.566        Mean   :4.621         
+ 3rd Qu.: 1.0000        3rd Qu.:4.820        3rd Qu.:4.870         
+ Max.   :91.0000        Max.   :5.000        Max.   :5.000         
+                                                                   
+ review_scores_cleanliness review_scores_checkin review_scores_communication
+ Min.   :0.000             Min.   :0.000         Min.   :0.000              
+ 1st Qu.:4.560             1st Qu.:4.711         1st Qu.:4.709              
+ Median :4.586             Median :4.730         Median :4.730              
+ Mean   :4.586             Mean   :4.711         Mean   :4.709              
+ 3rd Qu.:4.860             3rd Qu.:4.940         3rd Qu.:4.950              
+ Max.   :5.000             Max.   :5.000         Max.   :5.000              
+                                                                            
+ review_scores_location review_scores_value instant_bookable reviews_per_month
+ Min.   :0.000          Min.   :0.000       Mode :logical    Min.   : 0.010   
+ 1st Qu.:4.730          1st Qu.:4.400       FALSE:11248      1st Qu.: 0.370   
+ Median :4.737          Median :4.444       TRUE :6838       Median : 1.436   
+ Mean   :4.737          Mean   :4.444                        Mean   : 1.436   
+ 3rd Qu.:4.930          3rd Qu.:4.700                        3rd Qu.: 1.610   
+ Max.   :5.000          Max.   :5.000                        Max.   :55.020   
+                                                                              </code></pre>
+</div>
+</div>
+</section>
+<section id="distribución-de-las-notas-de-review" class="level2">
+<h2 class="anchored" data-anchor-id="distribución-de-las-notas-de-review">Distribución de las notas de review</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb39"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb39-1"><a href="#cb39-1" aria-hidden="true" tabindex="-1"></a><span class="fu">hist</span>(df<span class="sc">$</span>review_scores_rating, <span class="at">main =</span> <span class="st">"Histograma distribución de ratings"</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="AirbnbAB_files/figure-html/unnamed-chunk-22-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>En el gráfico podemos ver como la gran mayoría de reseñas tienen un nivel de entre 4 y 5, siendo 5 la moda. Vemos como las notas entre 1 y 3 son mínimas.</p>
+</section>
+<section id="distribución-del-precio-por-noche" class="level2">
+<h2 class="anchored" data-anchor-id="distribución-del-precio-por-noche">Distribución del precio por noche</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb40"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb40-1"><a href="#cb40-1" aria-hidden="true" tabindex="-1"></a><span class="fu">hist</span>(df<span class="sc">$</span>price, <span class="at">main =</span> <span class="st">"Histograma distribución precio"</span>, <span class="at">breaks=</span><span class="dv">100</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="AirbnbAB_files/figure-html/unnamed-chunk-23-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>El rango de precios con mayor frecuencia esta entre 0 y 100, por otro lado existen pocas observaciones con precios superiores a 400. La distribución de los precios es asimétrica positiva (sesgada a la derecha), con una cola larga que se extiende hacia los precios más altos lo que implica que las frecuencias de precios disminuyen rápidamente a medida que aumenta el precio.</p>
+</section>
+<section id="distribución-entre-precio-y-reviews" class="level2">
+<h2 class="anchored" data-anchor-id="distribución-entre-precio-y-reviews">Distribución entre precio y reviews</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb41"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb41-1"><a href="#cb41-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(df, <span class="fu">aes</span>(price, review_scores_rating)) <span class="sc">+</span> </span>
+<span id="cb41-2"><a href="#cb41-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_smooth</span>() </span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>`geom_smooth()` using method = 'gam' and formula = 'y ~ s(x, bs = "cs")'</code></pre>
+</div>
+<div class="cell-output-display">
+<p><img src="AirbnbAB_files/figure-html/unnamed-chunk-24-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>Existe una tendencia que muestra que a medida que el precio aumenta, las calificaciones de revisión tienden a mejorar, especialmente después del punto de precio de 750. El intervalo de confianza se amplía a medida que el precio aumenta, lo que sugiere que hay más variabilidad en las calificaciones de revisión para productos o servicios más caros. La mayoría de los datos parece estar concentrada en el rango de precios más bajo.</p>
+</section>
+<section id="media-de-precio-por-barrio" class="level2">
+<h2 class="anchored" data-anchor-id="media-de-precio-por-barrio">Media de precio por barrio</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb43"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb43-1"><a href="#cb43-1" aria-hidden="true" tabindex="-1"></a>df_precio_barrio <span class="ot">&lt;-</span> df <span class="sc">%&gt;%</span> <span class="fu">select</span>(price, neighbourhood_group_cleansed) <span class="sc">%&gt;%</span> <span class="fu">group_by</span>(neighbourhood_group_cleansed) <span class="sc">%&gt;%</span> <span class="fu">summarize</span>(<span class="at">avg_price =</span> <span class="fu">mean</span>(price, <span class="at">na.rm =</span> <span class="cn">TRUE</span>))</span>
+<span id="cb43-2"><a href="#cb43-2" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb43-3"><a href="#cb43-3" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(df_precio_barrio, <span class="fu">aes</span>(<span class="fu">reorder</span>(neighbourhood_group_cleansed, avg_price), avg_price)) <span class="sc">+</span></span>
+<span id="cb43-4"><a href="#cb43-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_col</span>() <span class="sc">+</span></span>
+<span id="cb43-5"><a href="#cb43-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">axis.text.x =</span> <span class="fu">element_text</span>(<span class="at">angle =</span> <span class="dv">90</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="AirbnbAB_files/figure-html/unnamed-chunk-25-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>Hay una variabilidad notable en los precios promedio entre los diferentes barrios. Eixample parece ser el barrio con el precio promedio más alto, seguido de cerca por Sarrià-Sant Gervasi. Por otro lado, Nou Barris parece ser el más económico en términos de precio promedio.</p>
+</section>
+<section id="distribución-de-la-calificación-por-localización-y-el-barrio-del-alojamiento" class="level2">
+<h2 class="anchored" data-anchor-id="distribución-de-la-calificación-por-localización-y-el-barrio-del-alojamiento">Distribución de la calificación por localización y el barrio del alojamiento</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb44"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb44-1"><a href="#cb44-1" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(df, <span class="fu">aes</span>(neighbourhood_group_cleansed, review_scores_rating)) <span class="sc">+</span></span>
+<span id="cb44-2"><a href="#cb44-2" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_boxplot</span>() <span class="sc">+</span></span>
+<span id="cb44-3"><a href="#cb44-3" aria-hidden="true" tabindex="-1"></a>  <span class="fu">labs</span>(<span class="at">x =</span> <span class="st">"Barrio"</span>, <span class="at">y =</span> <span class="st">"Calificación por localización"</span>) <span class="sc">+</span></span>
+<span id="cb44-4"><a href="#cb44-4" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ggtitle</span>(<span class="st">"Boxplot de calificación por localización y barrio"</span>) <span class="sc">+</span></span>
+<span id="cb44-5"><a href="#cb44-5" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">axis.text.x =</span> <span class="fu">element_text</span>(<span class="at">angle =</span> <span class="dv">90</span>))</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output-display">
+<p><img src="AirbnbAB_files/figure-html/unnamed-chunk-26-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>Todas las medianas ubicadas estan por encima del 4, lo cual sugiere una valoración generalmente alta en todas las áreas. Se observa una cantidad significativa de valores atípicos bajos en casi todos los barrios, indicando la existencia de lugares con calificaciones particularmente bajas dentro de áreas que, por lo demás, tienen buenas evaluaciones.</p>
+</section>
+<section id="apartados-de-reviews-divididas-por-tipo-de-alojamiento" class="level2">
+<h2 class="anchored" data-anchor-id="apartados-de-reviews-divididas-por-tipo-de-alojamiento">Apartados de reviews divididas por tipo de alojamiento</h2>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb45"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb45-1"><a href="#cb45-1" aria-hidden="true" tabindex="-1"></a>datos_agrupados <span class="ot">&lt;-</span> df <span class="sc">%&gt;%</span></span>
+<span id="cb45-2"><a href="#cb45-2" aria-hidden="true" tabindex="-1"></a><span class="fu">gather</span>(<span class="at">key =</span> <span class="st">"rating_type"</span>, <span class="at">value =</span> <span class="st">"ratings"</span>, review_scores_rating, review_scores_accuracy, review_scores_cleanliness, review_scores_checkin, review_scores_communication, review_scores_location, review_scores_value) <span class="sc">%&gt;%</span> <span class="fu">select</span>(ratings, rating_type) <span class="sc">%&gt;%</span> <span class="fu">cbind</span>(<span class="at">room_type =</span> df<span class="sc">$</span>room_type)</span>
+<span id="cb45-3"><a href="#cb45-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb45-4"><a href="#cb45-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb45-5"><a href="#cb45-5" aria-hidden="true" tabindex="-1"></a><span class="fu">ggplot</span>(datos_agrupados, <span class="fu">aes</span>(<span class="at">x =</span> room_type)) <span class="sc">+</span></span>
+<span id="cb45-6"><a href="#cb45-6" aria-hidden="true" tabindex="-1"></a>  <span class="fu">geom_boxplot</span>(<span class="fu">aes</span>(<span class="at">y =</span> ratings, <span class="at">fill =</span> rating_type)) <span class="sc">+</span></span>
+<span id="cb45-7"><a href="#cb45-7" aria-hidden="true" tabindex="-1"></a>  <span class="fu">scale_fill_brewer</span>(<span class="at">palette =</span> <span class="st">"Set1"</span>) <span class="sc">+</span></span>
+<span id="cb45-8"><a href="#cb45-8" aria-hidden="true" tabindex="-1"></a>  <span class="fu">theme</span>(<span class="at">axis.text.x =</span> <span class="fu">element_text</span>(<span class="at">angle =</span> <span class="dv">90</span>)) <span class="sc">+</span></span>
+<span id="cb45-9"><a href="#cb45-9" aria-hidden="true" tabindex="-1"></a>  <span class="fu">ylim</span>(<span class="fl">3.5</span>,<span class="dv">5</span>)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+<div class="cell-output cell-output-stderr">
+<pre><code>Warning: Removed 2822 rows containing non-finite values (`stat_boxplot()`).</code></pre>
+</div>
+<div class="cell-output-display">
+<p><img src="AirbnbAB_files/figure-html/unnamed-chunk-27-1.png" class="img-fluid" width="672"></p>
+</div>
+</div>
+<p>Comparando los diferentes tipos de habitaciones, parece que las “habitaciones de hotel” tienen calificaciones más consistentes en todas las categorías, como lo indica la menor cantidad de valores atípicos y las cajas más estrechas. Por otro lado, las “habitaciones compartidas” muestran una mayor variabilidad en la calificación general y el valor, lo cual es evidente por los valores atípicos más bajos y los rangos intercuartílicos más amplios.</p>
+</section>
+</section>
+<section id="modelo" class="level1">
+<h1>Modelo</h1>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb47"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb47-1"><a href="#cb47-1" aria-hidden="true" tabindex="-1"></a>modelo <span class="ot">&lt;-</span> <span class="fu">lm</span>(price <span class="sc">~</span> accommodates, n_bathrooms, bedrooms, <span class="at">data =</span> df)</span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+<div class="cell">
+<div class="sourceCode cell-code" id="cb48"><pre class="sourceCode r code-with-copy"><code class="sourceCode r"><span id="cb48-1"><a href="#cb48-1" aria-hidden="true" tabindex="-1"></a><span class="co"># quarto_render("AirbnbAB.qmd", output_format = "pdf")</span></span></code><button title="Copy to Clipboard" class="code-copy-button"><i class="bi"></i></button></pre></div>
+</div>
+</section>
+
+</main>
+<!-- /main column -->
+<script id="quarto-html-after-body" type="application/javascript">
+window.document.addEventListener("DOMContentLoaded", function (event) {
+  const toggleBodyColorMode = (bsSheetEl) => {
+    const mode = bsSheetEl.getAttribute("data-mode");
+    const bodyEl = window.document.querySelector("body");
+    if (mode === "dark") {
+      bodyEl.classList.add("quarto-dark");
+      bodyEl.classList.remove("quarto-light");
+    } else {
+      bodyEl.classList.add("quarto-light");
+      bodyEl.classList.remove("quarto-dark");
+    }
+  }
+  const toggleBodyColorPrimary = () => {
+    const bsSheetEl = window.document.querySelector("link#quarto-bootstrap");
+    if (bsSheetEl) {
+      toggleBodyColorMode(bsSheetEl);
+    }
+  }
+  toggleBodyColorPrimary();  
+  const icon = "";
+  const anchorJS = new window.AnchorJS();
+  anchorJS.options = {
+    placement: 'right',
+    icon: icon
+  };
+  anchorJS.add('.anchored');
+  const isCodeAnnotation = (el) => {
+    for (const clz of el.classList) {
+      if (clz.startsWith('code-annotation-')) {                     
+        return true;
+      }
+    }
+    return false;
+  }
+  const clipboard = new window.ClipboardJS('.code-copy-button', {
+    text: function(trigger) {
+      const codeEl = trigger.previousElementSibling.cloneNode(true);
+      for (const childEl of codeEl.children) {
+        if (isCodeAnnotation(childEl)) {
+          childEl.remove();
+        }
+      }
+      return codeEl.innerText;
+    }
+  });
+  clipboard.on('success', function(e) {
+    // button target
+    const button = e.trigger;
+    // don't keep focus
+    button.blur();
+    // flash "checked"
+    button.classList.add('code-copy-button-checked');
+    var currentTitle = button.getAttribute("title");
+    button.setAttribute("title", "Copied!");
+    let tooltip;
+    if (window.bootstrap) {
+      button.setAttribute("data-bs-toggle", "tooltip");
+      button.setAttribute("data-bs-placement", "left");
+      button.setAttribute("data-bs-title", "Copied!");
+      tooltip = new bootstrap.Tooltip(button, 
+        { trigger: "manual", 
+          customClass: "code-copy-button-tooltip",
+          offset: [0, -8]});
+      tooltip.show();    
+    }
+    setTimeout(function() {
+      if (tooltip) {
+        tooltip.hide();
+        button.removeAttribute("data-bs-title");
+        button.removeAttribute("data-bs-toggle");
+        button.removeAttribute("data-bs-placement");
+      }
+      button.setAttribute("title", currentTitle);
+      button.classList.remove('code-copy-button-checked');
+    }, 1000);
+    // clear code selection
+    e.clearSelection();
+  });
+  function tippyHover(el, contentFn) {
+    const config = {
+      allowHTML: true,
+      content: contentFn,
+      maxWidth: 500,
+      delay: 100,
+      arrow: false,
+      appendTo: function(el) {
+          return el.parentElement;
+      },
+      interactive: true,
+      interactiveBorder: 10,
+      theme: 'quarto',
+      placement: 'bottom-start'
+    };
+    window.tippy(el, config); 
+  }
+  const noterefs = window.document.querySelectorAll('a[role="doc-noteref"]');
+  for (var i=0; i<noterefs.length; i++) {
+    const ref = noterefs[i];
+    tippyHover(ref, function() {
+      // use id or data attribute instead here
+      let href = ref.getAttribute('data-footnote-href') || ref.getAttribute('href');
+      try { href = new URL(href).hash; } catch {}
+      const id = href.replace(/^#\/?/, "");
+      const note = window.document.getElementById(id);
+      return note.innerHTML;
+    });
+  }
+      let selectedAnnoteEl;
+      const selectorForAnnotation = ( cell, annotation) => {
+        let cellAttr = 'data-code-cell="' + cell + '"';
+        let lineAttr = 'data-code-annotation="' +  annotation + '"';
+        const selector = 'span[' + cellAttr + '][' + lineAttr + ']';
+        return selector;
+      }
+      const selectCodeLines = (annoteEl) => {
+        const doc = window.document;
+        const targetCell = annoteEl.getAttribute("data-target-cell");
+        const targetAnnotation = annoteEl.getAttribute("data-target-annotation");
+        const annoteSpan = window.document.querySelector(selectorForAnnotation(targetCell, targetAnnotation));
+        const lines = annoteSpan.getAttribute("data-code-lines").split(",");
+        const lineIds = lines.map((line) => {
+          return targetCell + "-" + line;
+        })
+        let top = null;
+        let height = null;
+        let parent = null;
+        if (lineIds.length > 0) {
+            //compute the position of the single el (top and bottom and make a div)
+            const el = window.document.getElementById(lineIds[0]);
+            top = el.offsetTop;
+            height = el.offsetHeight;
+            parent = el.parentElement.parentElement;
+          if (lineIds.length > 1) {
+            const lastEl = window.document.getElementById(lineIds[lineIds.length - 1]);
+            const bottom = lastEl.offsetTop + lastEl.offsetHeight;
+            height = bottom - top;
+          }
+          if (top !== null && height !== null && parent !== null) {
+            // cook up a div (if necessary) and position it 
+            let div = window.document.getElementById("code-annotation-line-highlight");
+            if (div === null) {
+              div = window.document.createElement("div");
+              div.setAttribute("id", "code-annotation-line-highlight");
+              div.style.position = 'absolute';
+              parent.appendChild(div);
+            }
+            div.style.top = top - 2 + "px";
+            div.style.height = height + 4 + "px";
+            let gutterDiv = window.document.getElementById("code-annotation-line-highlight-gutter");
+            if (gutterDiv === null) {
+              gutterDiv = window.document.createElement("div");
+              gutterDiv.setAttribute("id", "code-annotation-line-highlight-gutter");
+              gutterDiv.style.position = 'absolute';
+              const codeCell = window.document.getElementById(targetCell);
+              const gutter = codeCell.querySelector('.code-annotation-gutter');
+              gutter.appendChild(gutterDiv);
+            }
+            gutterDiv.style.top = top - 2 + "px";
+            gutterDiv.style.height = height + 4 + "px";
+          }
+          selectedAnnoteEl = annoteEl;
+        }
+      };
+      const unselectCodeLines = () => {
+        const elementsIds = ["code-annotation-line-highlight", "code-annotation-line-highlight-gutter"];
+        elementsIds.forEach((elId) => {
+          const div = window.document.getElementById(elId);
+          if (div) {
+            div.remove();
+          }
+        });
+        selectedAnnoteEl = undefined;
+      };
+      // Attach click handler to the DT
+      const annoteDls = window.document.querySelectorAll('dt[data-target-cell]');
+      for (const annoteDlNode of annoteDls) {
+        annoteDlNode.addEventListener('click', (event) => {
+          const clickedEl = event.target;
+          if (clickedEl !== selectedAnnoteEl) {
+            unselectCodeLines();
+            const activeEl = window.document.querySelector('dt[data-target-cell].code-annotation-active');
+            if (activeEl) {
+              activeEl.classList.remove('code-annotation-active');
+            }
+            selectCodeLines(clickedEl);
+            clickedEl.classList.add('code-annotation-active');
+          } else {
+            // Unselect the line
+            unselectCodeLines();
+            clickedEl.classList.remove('code-annotation-active');
+          }
+        });
+      }
+  const findCites = (el) => {
+    const parentEl = el.parentElement;
+    if (parentEl) {
+      const cites = parentEl.dataset.cites;
+      if (cites) {
+        return {
+          el,
+          cites: cites.split(' ')
+        };
+      } else {
+        return findCites(el.parentElement)
+      }
+    } else {
+      return undefined;
+    }
+  };
+  var bibliorefs = window.document.querySelectorAll('a[role="doc-biblioref"]');
+  for (var i=0; i<bibliorefs.length; i++) {
+    const ref = bibliorefs[i];
+    const citeInfo = findCites(ref);
+    if (citeInfo) {
+      tippyHover(citeInfo.el, function() {
+        var popup = window.document.createElement('div');
+        citeInfo.cites.forEach(function(cite) {
+          var citeDiv = window.document.createElement('div');
+          citeDiv.classList.add('hanging-indent');
+          citeDiv.classList.add('csl-entry');
+          var biblioDiv = window.document.getElementById('ref-' + cite);
+          if (biblioDiv) {
+            citeDiv.innerHTML = biblioDiv.innerHTML;
+          }
+          popup.appendChild(citeDiv);
+        });
+        return popup.innerHTML;
+      });
+    }
+  }
+});
+</script>
+</div> <!-- /content -->
+
+
+
+</body></html>
