@@ -5,9 +5,7 @@ format: html
 editor: visual
 ---
 
-
 A continuación se enumeran todas las librerías utilizadas en el AB:
-
 
 ```{r}
 library(readr)
@@ -15,14 +13,11 @@ library(tidyverse)
 library(quarto)
 ```
 
-
 # Datos usados
-
 
 ```{r}
 df <- read_csv("listings_bcn.csv", show_col_types = FALSE)
 ```
-
 
 ## Origen de los datos
 
@@ -40,11 +35,9 @@ Concretamente, los datos utilizados en este trabajo consisten en todas las resid
 
 Los datos utilizados consisten en unos datos tabulares los cuales consisten en 18086 entradas y 75 columnas.
 
-
 ```{r}
 str(df)
 ```
-
 
 En el archivo encontramos cuatro tipos de datos distintos:
 
@@ -62,11 +55,9 @@ Los datos nos hablan de todos los apartados relacionados con el alojamiento ofre
 
 A continuación, una muestra de los datos obtenidos:
 
-
 ```{r}
 head(df)
 ```
-
 
 # Objetivo del proyecto
 
@@ -76,11 +67,9 @@ El modelo a entrenar es de aprendizaje supervisado y continuo de regresión line
 
 # Limpieza de datos
 
-
 ```{r}
 df <- subset(df, select = c(host_response_time, host_response_rate, host_acceptance_rate, host_total_listings_count, host_verifications, neighbourhood_cleansed, neighbourhood_group_cleansed, property_type, room_type, accommodates, bathrooms_text, bedrooms, beds, amenities, price, minimum_nights, maximum_nights, availability_30, availability_60, availability_90, availability_365, number_of_reviews, number_of_reviews_ltm, number_of_reviews_l30d, review_scores_rating, review_scores_accuracy, review_scores_cleanliness, review_scores_checkin, review_scores_communication, review_scores_location, review_scores_value, instant_bookable, reviews_per_month))
 ```
-
 
 ## Ajustes de formato
 
@@ -88,14 +77,11 @@ df <- subset(df, select = c(host_response_time, host_response_rate, host_accepta
 
 Nos encontramos con variables categoricas en diferentes medidas de tiempo. Sería conveniente ajustar todas estas pora que estén en la misma medida de tiempo.
 
-
 ```{r}
 unique(df$host_response_time)
 ```
 
-
 Encontramos seis valores. A continuación listamos las diferentes categorías y su nuevo valor: - "within an hour" -\> \<1h - "within a few hours" -\> \~12h - "within a day -\> \<24h -"a few days or more" -\> \>48h - "N/A" -\> Unificar con NA
-
 
 ```{r}
 df$host_response_time <- ifelse(df$host_response_time == "within an hour", "<1h",
@@ -105,7 +91,6 @@ df$host_response_time <- ifelse(df$host_response_time == "within an hour", "<1h"
                         ifelse(df$host_response_time == "N/A", NA, df$host_response_time)))))
 ```
 
-
 ### bathrooms_text
 
 Esta variable incluye el valor númerico de baños y además nos indica si estos son compartidos o no. Para la claridad en los datos sería conveniente crear dos variables de esta:
@@ -114,14 +99,11 @@ Esta variable incluye el valor númerico de baños y además nos indica si estos
 
 2.  Un Boolean indicando si estos son compartidos o no.
 
-
 ```{r}
 unique(df$bathrooms_text)
 ```
 
-
 Vemos que casi todas las categorías tienen números. A excepción de tres de ellas. Vamos a añadirselo para compartir la estructura:
-
 
 ```{r}
 df$bathrooms_text <- ifelse(df$bathrooms_text == "Shared half-bath", "0.5 Shared bath",
@@ -130,25 +112,19 @@ df$bathrooms_text <- ifelse(df$bathrooms_text == "Shared half-bath", "0.5 Shared
 
 ```
 
-
 A continuación creamos la columna boolean la cual nos indica si un baño es compartido o no (Asumimos que si no es indicado, es privado).
-
 
 ```{r}
 df$shared_bathrooms <- grepl("shared|Shared", df$bathrooms_text)
 ```
 
-
 Seguidamente creamos una nueva columna que extraiga el número de baños del valor bathrooms_text
-
 
 ```{r}
 df$n_bathrooms <- sapply(strsplit(df$bathrooms_text, " "), function(x) as.numeric(x[1]))
 ```
 
-
 Recolocamos las columnas en la posición de bathrooms_text y eliminamos esta.
-
 
 ```{r}
 bathrooms_text_position <- which(colnames(df) == "bathrooms_text")
@@ -163,16 +139,13 @@ df <- df %>%
 rm(bathrooms_text_position)
 ```
 
-
 ### host_verifications
 
 En esta variable podemos ver en formato lista, los medios por los cuales se ha verificado un host. Para que los datos sean mas accesibles podemos crear una variable de tipo boolean por cada tipo de medio posible de verificación.
 
-
 ```{r}
 unique(df$host_verifications)
 ```
-
 
 Encontramos tres tipos de verificación:
 
@@ -183,7 +156,6 @@ Encontramos tres tipos de verificación:
 -   "work_email"
 
 Creamos las tres variables y añadimos true si ese método está incluido en la columna host_verifications.
-
 
 ```{r}
 df <- df %>%
@@ -202,16 +174,13 @@ df <- df %>%
 rm(host_verification_text_position)
 ```
 
-
 ### price
 
 Podemos convertir price en una variable numérica para poderla usar en visualizaciones y otros tipos de funciones de tipo continuo:
 
-
 ```{r}
 df$price <- as.numeric(gsub("\\$", "", df$price))
 ```
-
 
 ### amenities
 
@@ -221,27 +190,22 @@ En esta variable encontramos un formato lista con varios elementos, sin embargo,
 
 El valor mínimo que puede tener un alojamiento es 1. En algunos campos pone 0 a causa de que el resto de valores son NA. Vamos a modificar estos valores a NA.
 
-
 ```{r}
 df$review_scores_rating <- ifelse(df$review_scores_rating == 0, NA, df$review_scores_rating)
 ```
 
-
 ### host_response_rate y host_acceptance_rate
 
 Cambiamos ambas variables de tipo character con porcentaje a tipo numérico double:
-
 
 ```{r}
 df$host_response_rate <- as.numeric(sub("%", "", df$host_response_rate))/100
 df$host_acceptance_rate <- as.numeric(sub("%", "", df$host_acceptance_rate))/100
 ```
 
-
 ### Conversión de campos con tags en factores
 
 Cambiamos todas las columnas de tipos strings que tengan etiquetas a tipo factor para que su uso sea mas sencillo.
-
 
 ```{r}
 df <- df %>%
@@ -254,22 +218,18 @@ df <- df %>%
   )
 ```
 
-
 ## Tratamiento de NA's
 
 ### Análisis de los valores faltantes
 
 Comprobamos cuantos NA's faltan en cada columna para ver que tratamiento hacer con ellos.
 
-
 ```{r}
 na_analysis <- df %>% summarize(across(everything(), ~sum(is.na(.))))
 na_analysis
 ```
 
-
 Vamos a usar el promedio de cada columna para substituir los NA's
-
 
 ```{r}
 columnas_para_redondear <- c("host_total_listing_count", "bedrooms")
@@ -284,7 +244,6 @@ for (i in 1:ncol(df)) {
 } 
 ```
 
-
 Redondeamos las columnas que deberian tener valores enteros y no decimales.
 
 # Análisis descriptivo de los datos
@@ -293,45 +252,36 @@ Vamos a crear una variante del dataset, para la que solo incluir aquellos datos 
 
 ## Summary
 
-
 ```{r}
 summary(df)
 ```
 
-
 ## Distribución de las notas de review
-
 
 ```{r}
 hist(df$review_scores_rating, main = "Histograma distribución de ratings")
 ```
 
-
 En el gráfico podemos ver como la gran mayoría de reseñas tienen un nivel de entre 4 y 5, siendo 5 la moda. Vemos como las notas entre 1 y 3 son mínimas.
 
 ## Distribución del precio por noche
-
 
 ```{r}
 hist(df$price, main = "Histograma distribución precio", breaks=100)
 ```
 
-
 El rango de precios con mayor frecuencia esta entre 0 y 100, por otro lado existen pocas observaciones con precios superiores a 400. La distribución de los precios es asimétrica positiva (sesgada a la derecha), con una cola larga que se extiende hacia los precios más altos lo que implica que las frecuencias de precios disminuyen rápidamente a medida que aumenta el precio.
 
 ## Distribución entre precio y reviews
-
 
 ```{r}
 ggplot(df, aes(price, review_scores_rating)) + 
   geom_smooth() 
 ```
 
-
 Existe una tendencia que muestra que a medida que el precio aumenta, las calificaciones de revisión tienden a mejorar, especialmente después del punto de precio de 750. El intervalo de confianza se amplía a medida que el precio aumenta, lo que sugiere que hay más variabilidad en las calificaciones de revisión para productos o servicios más caros. La mayoría de los datos parece estar concentrada en el rango de precios más bajo.
 
 ## Media de precio por barrio
-
 
 ```{r}
 df_precio_barrio <- df %>% select(price, neighbourhood_group_cleansed) %>% group_by(neighbourhood_group_cleansed) %>% summarize(avg_price = mean(price, na.rm = TRUE))
@@ -341,11 +291,9 @@ ggplot(df_precio_barrio, aes(reorder(neighbourhood_group_cleansed, avg_price), a
   theme(axis.text.x = element_text(angle = 90))
 ```
 
-
 Hay una variabilidad notable en los precios promedio entre los diferentes barrios. Eixample parece ser el barrio con el precio promedio más alto, seguido de cerca por Sarrià-Sant Gervasi. Por otro lado, Nou Barris parece ser el más económico en términos de precio promedio.
 
 ## Distribución de la calificación por localización y el barrio del alojamiento
-
 
 ```{r}
 ggplot(df, aes(neighbourhood_group_cleansed, review_scores_rating)) +
@@ -355,11 +303,9 @@ ggplot(df, aes(neighbourhood_group_cleansed, review_scores_rating)) +
   theme(axis.text.x = element_text(angle = 90))
 ```
 
-
 Todas las medianas ubicadas estan por encima del 4, lo cual sugiere una valoración generalmente alta en todas las áreas. Se observa una cantidad significativa de valores atípicos bajos en casi todos los barrios, indicando la existencia de lugares con calificaciones particularmente bajas dentro de áreas que, por lo demás, tienen buenas evaluaciones.
 
 ## Apartados de reviews divididas por tipo de alojamiento
-
 
 ```{r}
 datos_agrupados <- df %>%
@@ -373,11 +319,9 @@ ggplot(datos_agrupados, aes(x = room_type)) +
   ylim(3.5,5)
 ```
 
-
 Comparando los diferentes tipos de habitaciones, parece que las "habitaciones de hotel" tienen calificaciones más consistentes en todas las categorías, como lo indica la menor cantidad de valores atípicos y las cajas más estrechas. Por otro lado, las "habitaciones compartidas" muestran una mayor variabilidad en la calificación general y el valor, lo cual es evidente por los valores atípicos más bajos y los rangos intercuartílicos más amplios.
 
 # Modelo
-
 
 ```{r}
 modelo <- lm(price ~ ., data = df)
@@ -387,4 +331,3 @@ modelo_optimizado_both <- step(modelo, direction = "both")
 ```{r}
 # quarto_render("AirbnbAB.qmd", output_format = "pdf")
 ```
-
