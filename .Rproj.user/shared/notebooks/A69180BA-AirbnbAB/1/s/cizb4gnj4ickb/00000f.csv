@@ -1,0 +1,4 @@
+"0","df$host_response_rate <- as.numeric(sub(""%"", """", df$host_response_rate))/100"
+"2","Warning: NAs introduced by coercion"
+"0","df$host_acceptance_rate <- as.numeric(sub(""%"", """", df$host_acceptance_rate))/100"
+"2","Warning: NAs introduced by coercion"

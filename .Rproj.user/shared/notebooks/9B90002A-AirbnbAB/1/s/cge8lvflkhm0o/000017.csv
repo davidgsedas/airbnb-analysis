@@ -1,0 +1,8 @@
+"0","df_numerico <- df |>"
+"0","  mutate(host_since = as.numeric(format(host_since, ""%Y""))) |> "
+"0","  mutate(across(where(is.numeric), scale)) |> "
+"0","  mutate(across(where(is.logical), as.numeric))  "
+"0",""
+"0","  df_numerico <- dummy_cols(df_numerico, "
+"0","                         select_columns = names(which(sapply(df_numerico, is.factor))),"
+"0","                         remove_selected_columns = TRUE)"

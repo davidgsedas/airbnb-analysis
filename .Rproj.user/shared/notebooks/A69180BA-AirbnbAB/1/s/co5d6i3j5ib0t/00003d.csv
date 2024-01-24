@@ -1,0 +1,2 @@
+"0","# Asegurarse de que 'predicciones' es un vector numérico sin nombres"
+"0","test_data1$predicciones <- unname(test_data1$predicciones)"

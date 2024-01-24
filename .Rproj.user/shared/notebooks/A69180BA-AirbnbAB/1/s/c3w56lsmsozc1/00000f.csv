@@ -1,0 +1,1 @@
+"0","df$n_bathrooms <- sapply(strsplit(df$bathrooms_text, "" ""), function(x) as.numeric(x[1]))"

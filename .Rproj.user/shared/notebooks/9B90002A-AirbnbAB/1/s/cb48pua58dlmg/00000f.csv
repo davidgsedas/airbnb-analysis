@@ -1,0 +1,4 @@
+"0","df$bathrooms_text <- ifelse(df$bathrooms_text == ""Shared half-bath"", ""0.5 Shared bath"","
+"0","                            ifelse(df$bathrooms_text == ""Private half-bath"", ""0.5 bath"","
+"0","                            ifelse(df$bathrooms_text == ""Half-bath"", ""0.5 bath"", df$bathrooms_text)))"
+"0",""

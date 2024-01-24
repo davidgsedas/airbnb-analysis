@@ -1,0 +1,1 @@
+"0","df$host_identity_verified[is.na(df$host_identity_verified)] <- FALSE"

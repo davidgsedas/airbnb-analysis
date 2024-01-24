@@ -1,0 +1,1 @@
+"0","predicciones_modelo1 <- predict(modelo1, newdata = test_data1)"

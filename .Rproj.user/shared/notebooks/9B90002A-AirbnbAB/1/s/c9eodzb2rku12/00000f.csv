@@ -1,0 +1,1 @@
+"0","hist(df$review_scores_rating, main = ""Histograma distribución de ratings"")"

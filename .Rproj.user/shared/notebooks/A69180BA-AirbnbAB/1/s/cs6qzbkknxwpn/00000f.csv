@@ -1,0 +1,2 @@
+"0","df$price <- as.numeric(gsub(""\\$"", """", df$price))"
+"2","Warning: NAs introduced by coercion"

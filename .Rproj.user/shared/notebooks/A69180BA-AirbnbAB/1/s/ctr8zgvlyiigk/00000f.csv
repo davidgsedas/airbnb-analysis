@@ -1,0 +1,1 @@
+"0","df$review_scores_rating <- ifelse(df$review_scores_rating == 0, NA, df$review_scores_rating)"

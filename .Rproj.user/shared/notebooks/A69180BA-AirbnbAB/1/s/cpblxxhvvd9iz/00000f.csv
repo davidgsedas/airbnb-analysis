@@ -1,0 +1,1 @@
+"0","df$host_is_superhost[is.na(df$host_is_superhost)] <- FALSE"

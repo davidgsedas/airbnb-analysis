@@ -1,0 +1,1 @@
+"0","modelo1 <- lm(price ~ ., data = training_data1)"

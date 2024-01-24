@@ -1,0 +1,2 @@
+"0","na_analysis <- df %>% summarize(across(everything(), ~sum(is.na(.))))"
+"0","na_analysis"

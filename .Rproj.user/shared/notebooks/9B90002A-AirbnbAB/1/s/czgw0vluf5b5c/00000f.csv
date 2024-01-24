@@ -1,0 +1,5 @@
+"0","ggplot(df, aes(neighbourhood_group_cleansed, review_scores_rating)) +"
+"0","  geom_boxplot() +"
+"0","  labs(x = ""Barrio"", y = ""Calificación por localización"") +"
+"0","  ggtitle(""Boxplot de calificación por localización y barrio"") +"
+"0","  theme(axis.text.x = element_text(angle = 90))"

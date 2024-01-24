@@ -1,0 +1,8 @@
+"0","set.seed(123)"
+"0",""
+"0","training_test_split <- initial_split(df, prop = 0.8, strata = neighbourhood_group_cleansed)"
+"0",""
+"0","# Crear los data frames de entrenamiento y el resto"
+"0","training_data <- training(training_test_split)"
+"0","test_data <- testing(training_test_split)"
+"0","rm(training_test_split)"

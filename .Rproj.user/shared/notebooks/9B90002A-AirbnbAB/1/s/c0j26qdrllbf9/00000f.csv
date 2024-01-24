@@ -1,0 +1,2 @@
+"0","df <- df |>"
+"0","  mutate(across(where(is.numeric), ~if (any(is.na(.))) floor(replace_na(., mean(., na.rm = TRUE))) else .))"

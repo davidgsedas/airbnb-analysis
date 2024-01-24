@@ -1,0 +1,5 @@
+"0","df$host_response_time <- ifelse(df$host_response_time == ""within an hour"", ""<1h"","
+"0","                        ifelse(df$host_response_time == ""within a few hours"", ""~12h"","
+"0","                        ifelse(df$host_response_time == ""within a day"", ""~24h"","
+"0","                        ifelse(df$host_response_time == ""a few days or more"", "">48h"","
+"0","                        ifelse(df$host_response_time == ""N/A"", NA, df$host_response_time)))))"

@@ -1,0 +1,5 @@
+"0","# Mostrar las métricas"
+"0","lista_metrics1 <- list(metrics = metrics1, RMSE = rmse_value1, R2 = r_squared1)"
+"0","lista_metrics1"
+"1","$metrics
+"

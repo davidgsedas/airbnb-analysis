@@ -1,0 +1,22 @@
+"0","df <- df %>%"
+"0","  mutate(verification_email = str_detect(df$host_verifications, ""email""),"
+"0","         verification_phone = str_detect(df$host_verifications, ""phone""),"
+"0","         verification_work_email = str_detect(df$host_verifications, ""work_email""))"
+"0",""
+"0","host_verification_text_position <- which(colnames(df) == ""host_verifications"")"
+"0",""
+"0","df <- df %>%"
+"0","  relocate(all_of(c(""verification_email"", ""verification_phone"", ""verification_work_email"")), .before = host_verification_text_position)"
+"2","Warning: Using an external vector in selections was deprecated in tidyselect 1.1.0.
+Please use `all_of()` or `any_of()` instead.
+# Was:
+data %>% select(host_verification_text_position)
+
+# Now:
+data %>% select(all_of(host_verification_text_position))
+
+See <https://tidyselect.r-lib.org/reference/faq-external-vector.html>."
+"0","df <- df %>%"
+"0","  select(-host_verifications)"
+"0",""
+"0","rm(host_verification_text_position)"

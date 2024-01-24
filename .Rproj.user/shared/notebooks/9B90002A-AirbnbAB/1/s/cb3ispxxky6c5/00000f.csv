@@ -1,0 +1,4 @@
+"0","# Aplicar PCA utilizando la función prcomp"
+"0","pca_result <- prcomp(pca_data, center = TRUE, scale. = FALSE)"
+"2","Error: object 'pca_data' not found
+"

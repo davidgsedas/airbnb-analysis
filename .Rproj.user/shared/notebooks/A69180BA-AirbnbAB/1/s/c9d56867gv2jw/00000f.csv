@@ -1,0 +1,5 @@
+"0","loadings_df <- loadings_df_sorted |>"
+"0","    filter(Suma > 0.10) "
+"0",""
+"0","seleccion_variables <- rownames(loadings_df)"
+"0","seleccion_variables <- c(seleccion_variables, ""price"")"

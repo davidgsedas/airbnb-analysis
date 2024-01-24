@@ -1,0 +1,5 @@
+"0","df_precio_barrio <- df %>% select(price, neighbourhood_group_cleansed) %>% group_by(neighbourhood_group_cleansed) %>% summarize(avg_price = mean(price, na.rm = TRUE))"
+"0",""
+"0","ggplot(df_precio_barrio, aes(reorder(neighbourhood_group_cleansed, avg_price), avg_price)) +"
+"0","  geom_col() +"
+"0","  theme(axis.text.x = element_text(angle = 90))"

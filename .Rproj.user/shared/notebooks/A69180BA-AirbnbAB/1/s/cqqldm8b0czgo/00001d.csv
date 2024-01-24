@@ -1,0 +1,2 @@
+"0","metrics1 <- test_data1 %>%"
+"0","  metrics(truth = price, estimate = predicciones)"

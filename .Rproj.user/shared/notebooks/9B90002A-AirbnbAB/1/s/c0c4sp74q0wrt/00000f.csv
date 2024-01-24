@@ -1,0 +1,2 @@
+"0","mean_host_since <- mean(df$host_since, na.rm=TRUE)"
+"0","df$host_since[is.na(df$host_since)] <- mean_host_since"

@@ -1,0 +1,6 @@
+"0","residuo1 <- sum(residuals(modelo1))"
+"0",""
+"0","residuo1 <- c(""residuo"", ""standard"", residuo1)"
+"0",""
+"0","metrics1 <-rbind(metrics1, residuo1)"
+"0","  "

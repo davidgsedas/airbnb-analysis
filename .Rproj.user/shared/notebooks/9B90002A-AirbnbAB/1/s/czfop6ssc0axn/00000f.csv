@@ -1,0 +1,8 @@
+"0","df <- df %>%"
+"0","  mutate("
+"0","    host_response_time = factor(host_response_time),"
+"0","    neighbourhood_cleansed = factor(neighbourhood_cleansed),"
+"0","    neighbourhood_group_cleansed = factor(neighbourhood_group_cleansed),"
+"0","    property_type = factor(property_type),"
+"0","    room_type = factor(room_type)"
+"0","  )"

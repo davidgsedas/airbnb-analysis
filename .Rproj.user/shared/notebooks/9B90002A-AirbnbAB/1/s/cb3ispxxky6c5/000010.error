@@ -1,0 +1,1 @@
+{"frames":[{"func":"prcomp(pca_data, center = TRUE, scale. = FALSE)","file":"","line_number":0,"end_line_number":0,"character_number":0,"end_character_number":0}],"message":"Error: object 'pca_data' not found\n"}

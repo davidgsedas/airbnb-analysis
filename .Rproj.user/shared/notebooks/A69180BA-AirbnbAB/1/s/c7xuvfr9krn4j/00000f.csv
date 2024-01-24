@@ -1,0 +1,2 @@
+"0","training_data1 <- training_data %>% "
+"0","  select_if(is.numeric)"
